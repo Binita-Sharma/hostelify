@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../../services/firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { realtimeDB } from '../../services/firebase';
+import { ref, onValue, get } from 'firebase/database';
 import { 
   Users, 
   DoorOpen, 
@@ -45,31 +45,38 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     // 1. Students Count
-    const unsubscribeStudents = onSnapshot(query(collection(db, 'users'), where('role', '==', 'student')), (snap) => {
-      setStats(prev => ({ ...prev, students: snap.size }));
+    const studentsRef = ref(realtimeDB, 'users');
+    const unsubscribeStudents = onValue(studentsRef, (snap) => {
+      const users = snap.val();
+      const students = users ? Object.values(users).filter(u => u.role === 'student').length : 0;
+      setStats(prev => ({ ...prev, students }));
     });
 
     // 2. Rooms & Occupancy
-    const unsubscribeRooms = onSnapshot(collection(db, 'rooms'), (snap) => {
-      const rooms = snap.docs.map(d => d.data());
-      const totalCapacity = rooms.reduce((sum, r) => sum + (r.capacity || 0), 0);
-      const totalOccupied = rooms.reduce((sum, r) => sum + (r.occupied || 0), 0);
+    const roomsRef = ref(realtimeDB, 'rooms');
+    const unsubscribeRooms = onValue(roomsRef, (snap) => {
+      const rooms = snap.val();
+      const roomsArray = rooms ? Object.values(rooms) : [];
+      const totalCapacity = roomsArray.reduce((sum, r) => sum + (r.capacity || 0), 0);
+      const totalOccupied = roomsArray.reduce((sum, r) => sum + (r.occupied || 0), 0);
       const occupancyRate = totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0;
       
       setStats(prev => ({ 
         ...prev, 
-        rooms: snap.size,
+        rooms: roomsArray.length,
         occupancy: `${occupancyRate}%`,
         occupancyDetail: `${totalOccupied}/${totalCapacity}`
       }));
     });
 
     // 3. Complaints Stats & Chart
-    const unsubscribeComplaints = onSnapshot(collection(db, 'complaints'), (snap) => {
-      const complaints = snap.docs.map(d => d.data());
-      const open = complaints.filter(c => c.status !== 'Resolved').length;
-      const high = complaints.filter(c => c.priority === 'high' && c.status !== 'Resolved').length;
-      const resolved = complaints.filter(c => c.status === 'Resolved').length;
+    const complaintsRef = ref(realtimeDB, 'complaints');
+    const unsubscribeComplaints = onValue(complaintsRef, (snap) => {
+      const complaints = snap.val();
+      const complaintsArray = complaints ? Object.values(complaints) : [];
+      const open = complaintsArray.filter(c => c.status !== 'Resolved').length;
+      const high = complaintsArray.filter(c => c.priority === 'high' && c.status !== 'Resolved').length;
+      const resolved = complaintsArray.filter(c => c.status === 'Resolved').length;
 
       setStats(prev => ({ 
         ...prev, 
@@ -79,7 +86,7 @@ const AdminDashboard = () => {
       }));
 
       // Group by category for chart
-      const categories = complaints.reduce((acc, curr) => {
+      const categories = complaintsArray.reduce((acc, curr) => {
         const cat = curr.category || 'Other';
         acc[cat] = (acc[cat] || 0) + 1;
         return acc;
@@ -89,10 +96,12 @@ const AdminDashboard = () => {
     });
 
     // 4. Fees Stats & Chart
-    const unsubscribeFees = onSnapshot(collection(db, 'fees'), (snap) => {
-      const fees = snap.docs.map(d => d.data());
-      const pending = fees.filter(f => f.status === 'pending').reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
-      const collected = fees.filter(f => f.status === 'paid').reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+    const feesRef = ref(realtimeDB, 'fees');
+    const unsubscribeFees = onValue(feesRef, (snap) => {
+      const fees = snap.val();
+      const feesArray = fees ? Object.values(fees) : [];
+      const pending = feesArray.filter(f => f.status === 'pending').reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+      const collected = feesArray.filter(f => f.status === 'paid').reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
 
       setStats(prev => ({ 
         ...prev, 

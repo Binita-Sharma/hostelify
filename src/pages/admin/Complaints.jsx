@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../services/firebase';
+import { realtimeDB } from '../../services/firebase';
 import { 
-  collection, 
-  query, 
-  onSnapshot, 
-  orderBy, 
-  doc, 
-  updateDoc, 
-  Timestamp,
-  arrayUnion 
-} from 'firebase/firestore';
+  ref, 
+  onValue, 
+  update
+} from 'firebase/database';
 import { 
   Search, 
   Filter, 
@@ -33,29 +28,19 @@ const AdminComplaints = () => {
   const [showDetail, setShowDetail] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, 'complaints'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    const complaintsRef = ref(realtimeDB, 'complaints');
+    const unsubscribe = onValue(complaintsRef, (snapshot) => {
+      const complaints = snapshot.val();
+      const data = complaints ? Object.entries(complaints)
+        .map(([id, complaint]) => ({
+          id,
+          ...complaint
+        }))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
       setComplaints(data);
     }, (error) => {
-      console.warn("Firestore error:", error);
-      // Mock data for demo if Firestore fails
-      setComplaints([
-        { 
-          id: '1777315951', 
-          title: 'water leakage', 
-          status: 'Pending', 
-          priority: 'high', 
-          category: 'Water', 
-          resource: 'Plumbing',
-          studentName: 'Aarav Sharma',
-          createdAt: { toDate: () => new Date('2026-04-28') },
-          description: 'The bathroom tap is leaking continuously.'
-        }
-      ]);
+      console.error("Realtime Database error:", error);
+      setComplaints([]);
     });
     return () => unsubscribe();
   }, []);
@@ -69,14 +54,14 @@ const AdminComplaints = () => {
   const updateStatus = async (id, newStatus) => {
     setLoading(true);
     try {
-      const complaintRef = doc(db, 'complaints', id);
-      await updateDoc(complaintRef, {
+      const updates = selectedComplaint?.updates || [];
+      await update(ref(realtimeDB, 'complaints/' + id), {
         status: newStatus,
-        updates: arrayUnion({
+        updates: [...updates, {
           status: newStatus,
           message: `Status updated to ${newStatus} by Admin`,
-          time: Timestamp.now()
-        })
+          time: new Date().toISOString()
+        }]
       });
       if (selectedComplaint?.id === id) {
         setSelectedComplaint(prev => ({...prev, status: newStatus}));
@@ -158,7 +143,7 @@ const AdminComplaints = () => {
                   <span className="dot">•</span>
                   <span>{item.studentName}</span>
                   <span className="dot">•</span>
-                  <span>{item.createdAt?.toDate().toLocaleDateString('en-GB')}</span>
+                  <span>{new Date(item.createdAt).toLocaleDateString('en-GB')}</span>
                 </div>
               </div>
               <ChevronRight size={20} className="chevron" />

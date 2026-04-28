@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../services/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { realtimeDB } from '../../services/firebase';
+import { ref, onValue, update } from 'firebase/database';
 import { Search, Filter, UserPlus, Mail, Phone, Home, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import './Students.css';
 
@@ -9,12 +9,14 @@ const AdminStudents = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const q = query(collection(db, 'users'), where('role', '==', 'student'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    const studentsRef = ref(realtimeDB, 'students');
+    const unsubscribe = onValue(studentsRef, (snapshot) => {
+      const students = snapshot.val();
+      const data = students ? Object.entries(students)
+        .map(([id, student]) => ({
+          id,
+          ...student
+        })) : [];
       setStudents(data);
     });
     return () => unsubscribe();

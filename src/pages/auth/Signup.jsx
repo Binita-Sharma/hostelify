@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { UserPlus, Mail, Lock, User, Hash, AlertCircle } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Hash, AlertCircle, Phone } from 'lucide-react';
 import './Auth.css';
 
 const Signup = () => {
@@ -11,6 +11,7 @@ const Signup = () => {
     password: '',
     confirmPassword: '',
     rollNumber: '',
+    phone: '',
     role: 'student'
   });
   const [error, setError] = useState('');
@@ -31,11 +32,16 @@ const Signup = () => {
     try {
       setError('');
       setLoading(true);
-      await signup(formData.email, formData.password, formData.role, {
+      const user = await signup(formData.email, formData.password, formData.role, {
         name: formData.name,
         rollNumber: formData.rollNumber,
+        phone: formData.phone,
       });
-      navigate('/');
+      
+      // For now, auto-login after successful signup
+      // In production, you might want email verification first
+      alert('Account created successfully! You can now login.');
+      navigate('/login');
     } catch (err) {
       setError('Failed to create an account. ' + err.message);
     } finally {
@@ -113,6 +119,21 @@ const Signup = () => {
                   placeholder="2024CS101" 
                   value={formData.rollNumber}
                   onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Phone Number</label>
+              <div className="input-wrapper">
+                <Phone className="input-icon" size={18} />
+                <input 
+                  type="tel" 
+                  name="phone"
+                  placeholder="+91 98765 43210" 
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required 
                 />
               </div>
             </div>

@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../services/firebase';
+import { realtimeDB } from '../../services/firebase';
 import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  onSnapshot, 
-  orderBy, 
-  Timestamp 
-} from 'firebase/firestore';
+  ref, 
+  set, 
+  onValue
+} from 'firebase/database';
 import { 
   Plus, 
   MessageSquare, 
@@ -36,22 +32,27 @@ const Complaints = () => {
   const categories = ['Electricity', 'Water', 'Internet', 'Cleaning', 'Maintenance', 'Security', 'Others'];
 
   useEffect(() => {
-    if (!userData?.uid) return;
+    if (!userData) return;
 
-    const q = query(
-      collection(db, 'complaints'),
-      where('studentId', '==', userData.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    const complaintsRef = ref(realtimeDB, 'complaints');
+    const unsubscribe = onValue(complaintsRef, (snapshot) => {
+      const complaints = snapshot.val();
+      const data = complaints ? Object.entries(complaints)
+        .filter(([id, complaint]) => {
+          // Filter by multiple possible user identifiers
+          return complaint.studentId === userData.uid || 
+                 complaint.studentId === userData.id ||
+                 complaint.studentName === userData.name;
+        })
+        .map(([id, complaint]) => ({
+          id,
+          ...complaint
+        }))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
       setComplaints(data);
+      console.log('Filtered complaints for user:', userData.name, 'Found:', data.length);
     }, (error) => {
-      console.error("Firestore error:", error);
+      console.error("Realtime Database error:", error);
     });
 
     return () => unsubscribe();
@@ -61,17 +62,22 @@ const Complaints = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await addDoc(collection(db, 'complaints'), {
+      const complaintId = 'complaint_' + Date.now();
+      const studentId = userData.uid || userData.id || 'student_' + Date.now();
+      
+      await set(ref(realtimeDB, 'complaints/' + complaintId), {
         ...newComplaint,
-        studentId: userData.uid,
-        studentName: userData.name,
+        studentId: studentId,
+        studentName: userData.name || 'Unknown Student',
         roomNumber: userData.roomNumber || 'N/A',
         status: 'Pending',
-        createdAt: Timestamp.now(),
+        createdAt: new Date().toISOString(),
         updates: [
-          { status: 'Pending', message: 'Complaint submitted successfully', time: Timestamp.now() }
+          { status: 'Pending', message: 'Complaint submitted successfully', time: new Date().toISOString() }
         ]
       });
+      
+      console.log('Complaint created for student:', userData.name, 'with ID:', studentId);
       setShowModal(false);
       setNewComplaint({ title: '', category: 'Maintenance', description: '', priority: 'Medium' });
     } catch (err) {
@@ -141,7 +147,7 @@ const Complaints = () => {
                     <span className="category-tag">{item.category}</span>
                     <span className="date-tag">
                       <Clock size={12} />
-                      {item.createdAt?.toDate().toLocaleDateString()}
+                      {new Date(item.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                   <p>{item.description}</p>
