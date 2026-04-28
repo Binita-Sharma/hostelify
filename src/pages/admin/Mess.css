@@ -1,0 +1,124 @@
+.admin-mess-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.subtitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  margin-top: 8px;
+}
+
+.tab-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #f1f5f9;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.tab-btn.active {
+  background-color: white;
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
+}
+
+.menu-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.day-card {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.day-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--primary);
+}
+
+.day-header h3 {
+  font-size: 1.25rem;
+  color: var(--text-main);
+}
+
+.meal-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.input-group input {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: #fcfcfc;
+  font-size: 14px;
+}
+
+.input-group input:focus {
+  border-color: var(--primary);
+  background-color: white;
+}
+
+.save-day-btn {
+  width: fit-content;
+  background-color: var(--primary);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.save-day-btn:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.loading {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--text-secondary);
+}

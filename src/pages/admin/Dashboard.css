@@ -1,0 +1,122 @@
+.admin-dashboard-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+/* Stats Grid V2 */
+.stats-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1200px) {
+  .stats-grid-v2 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .stats-grid-v2 { grid-template-columns: 1fr; }
+}
+
+.stat-card-v2 {
+  background-color: white;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: var(--transition-fast);
+}
+
+.stat-card-v2:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+}
+
+.card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-icon.students { background-color: #f1f5f9; color: #64748b; }
+.card-icon.rooms { background-color: #fef2f2; color: #ef4444; opacity: 0.7; } /* Reddish */
+.card-icon.occupancy { background-color: #f0fdf4; color: #22c55e; }
+.card-icon.complaints { background-color: #fffbeb; color: #f59e0b; }
+.card-icon.high-priority { background-color: #fef2f2; color: #ef4444; }
+.card-icon.resolved { background-color: #f0fdf4; color: #22c55e; }
+.card-icon.fees { background-color: #fff7ed; color: #f97316; }
+.card-icon.collected { background-color: #f0fdf9; color: #14b8a6; }
+
+.card-content label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.card-content h3 {
+  font-size: 1.5rem;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.card-content .subtext {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Charts Section */
+.charts-container-v2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .charts-container-v2 { grid-template-columns: 1fr; }
+}
+
+.chart-box {
+  background-color: white;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-box h3 {
+  font-size: 1.1rem;
+  margin-bottom: 32px;
+  color: var(--text-secondary);
+}
+
+.chart-wrapper {
+  height: 300px;
+}
+
+/* Recharts Customization */
+.recharts-cartesian-axis-tick-value {
+  fill: #8395a7;
+  font-weight: 500;
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
