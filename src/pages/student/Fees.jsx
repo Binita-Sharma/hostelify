@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../services/firebase';
+import { realtimeDB } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
-import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { ref, onValue, update } from 'firebase/database';
 import { CheckCircle, Clock, ReceiptText } from 'lucide-react';
 import './Fees.css';
 
@@ -12,8 +12,10 @@ const Fees = () => {
 
   const handlePay = async (id) => {
     try {
-      const docRef = doc(db, 'fees', id);
-      await updateDoc(docRef, { status: 'paid' });
+      await update(ref(realtimeDB, 'fees/' + id), { 
+        status: 'paid',
+        paidDate: new Date().toISOString()
+      });
       alert('Payment successful!');
     } catch (error) {
       console.error("Payment failed:", error);
@@ -24,17 +26,16 @@ const Fees = () => {
     if (!userData?.name) return;
 
     // Fetch fees assigned to this student name
-    const q = query(
-      collection(db, 'fees'), 
-      where('student', '==', userData.name),
-      orderBy('due', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    const feesRef = ref(realtimeDB, 'fees');
+    const unsubscribe = onValue(feesRef, (snapshot) => {
+      const fees = snapshot.val();
+      const data = fees ? Object.entries(fees)
+        .filter(([id, fee]) => fee.student === userData.name)
+        .map(([id, fee]) => ({
+          id,
+          ...fee
+        }))
+        .sort((a, b) => new Date(b.due) - new Date(a.due)) : [];
       setFeeRecords(data);
       setLoading(false);
     }, (error) => {

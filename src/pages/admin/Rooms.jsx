@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../services/firebase';
-import { collection, query, onSnapshot, doc, updateDoc, addDoc, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { realtimeDB } from '../../services/firebase';
+import { ref, onValue, update, set, remove } from 'firebase/database';
 import { 
   Plus, 
   Edit2, 
@@ -29,22 +29,21 @@ const AdminRooms = () => {
   });
 
   useEffect(() => {
-    const qRooms = query(collection(db, 'rooms'));
-    const unsubscribeRooms = onSnapshot(qRooms, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const roomsRef = ref(realtimeDB, 'rooms');
+    const unsubscribeRooms = onValue(roomsRef, (snapshot) => {
+      const rooms = snapshot.val();
+      const data = rooms ? Object.entries(rooms).map(([id, room]) => ({ id, ...room })) : [];
       setRooms(data);
     }, (error) => {
-      console.error("Firestore error:", error);
+      console.error("Realtime Database error:", error);
     });
 
-    const qStudents = query(collection(db, 'users'), (snap) => {
-       // Handled below in different listener if needed, but we'll use a combined approach
-    });
-    
-    // Fetch students separately for assignment
-    const unsubscribeStudents = onSnapshot(query(collection(db, 'users')), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setStudents(data.filter(s => s.role === 'student'));
+    const studentsRef = ref(realtimeDB, 'students');
+    const unsubscribeStudents = onValue(studentsRef, (snapshot) => {
+      const students = snapshot.val();
+      const data = students ? Object.entries(students)
+        .map(([id, student]) => ({ id, ...student })) : [];
+      setStudents(data);
     });
 
     return () => { unsubscribeRooms(); unsubscribeStudents(); };
@@ -54,7 +53,8 @@ const AdminRooms = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await addDoc(collection(db, 'rooms'), {
+      const roomId = 'room_' + Date.now();
+      await set(ref(realtimeDB, 'rooms/' + roomId), {
         ...newRoom,
         occupied: 0,
         students: []
@@ -77,9 +77,9 @@ const AdminRooms = () => {
     
     setLoading(true);
     try {
-      const roomRef = doc(db, 'rooms', selectedRoom.id);
-      await updateDoc(roomRef, {
-        students: arrayUnion(studentName),
+      const updatedStudents = [...(selectedRoom.students || []), studentName];
+      await update(ref(realtimeDB, 'rooms/' + selectedRoom.id), {
+        students: updatedStudents,
         occupied: selectedRoom.occupied + 1
       });
       setShowAssignModal(false);
@@ -92,7 +92,7 @@ const AdminRooms = () => {
 
   const deleteRoom = async (id) => {
     if(window.confirm("Are you sure you want to delete this room?")) {
-      await deleteDoc(doc(db, 'rooms', id));
+      await remove(ref(realtimeDB, 'rooms/' + id));
     }
   };
 

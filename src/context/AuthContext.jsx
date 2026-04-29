@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth, db } from '../services/firebase';
+import { auth, realtimeDB } from '../services/firebase';
 import { 
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
@@ -7,11 +7,22 @@ import {
   signOut,
   sendPasswordResetEmail
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { ref, get, set } from 'firebase/database';
+import { generateToken, verifyToken, setAuthCookie, getAuthCookie, removeAuthCookie, getUserFromToken } from '../utils/auth';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
+
+// Password utility functions
+const encryptPassword = (password) => {
+  // Simple encryption for demo purposes - in production, use proper hashing
+  return btoa(password);
+};
+
+const comparePasswords = (inputPassword, storedPassword) => {
+  return btoa(inputPassword) === storedPassword;
+};
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -19,89 +30,108 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const login = async (email, password) => {
-    // Demo Bypass Logic (Optional: Keep for user convenience but prioritize real auth)
-    if (email === 'admin@hostelify.com' && password === 'admin123') {
-      const mockAdmin = { 
-        uid: 'demo-admin', 
-        email: 'admin@hostelify.com', 
-        role: 'admin', 
-        name: 'Demo Admin' 
-      };
-      setCurrentUser(mockAdmin);
-      setUserData(mockAdmin);
-      return mockAdmin;
+    // Custom authentication using separate students and admins tables
+    try {
+      // Check admins table first
+      const adminsRef = ref(realtimeDB, 'admins');
+      const adminsSnapshot = await get(adminsRef);
+      
+      if (adminsSnapshot.exists()) {
+        const admins = adminsSnapshot.val();
+        const admin = Object.values(admins).find(a => a.email === email && comparePasswords(password, a.password));
+        
+        if (admin) {
+          setCurrentUser(admin);
+          setUserData({ ...admin, role: 'admin' });
+          // Store token in cookie
+          const token = generateToken({ ...admin, role: 'admin' });
+          setAuthCookie(token);
+          return admin;
+        }
+      }
+      
+      // Check students table if not found in admins
+      const studentsRef = ref(realtimeDB, 'students');
+      const studentsSnapshot = await get(studentsRef);
+      
+      if (studentsSnapshot.exists()) {
+        const students = studentsSnapshot.val();
+        const student = Object.values(students).find(s => s.email === email && comparePasswords(password, s.password));
+        
+        if (student) {
+          setCurrentUser(student);
+          setUserData({ ...student, role: 'student' });
+          // Store token in cookie
+          const token = generateToken({ ...student, role: 'student' });
+          setAuthCookie(token);
+          return student;
+        }
+      }
+      
+      throw new Error('Invalid email or password');
+    } catch (error) {
+      throw new Error('Authentication failed: ' + error.message);
     }
-    
-    if (email === 'student@hostelify.com' && password === 'student123') {
-      const mockStudent = { 
-        uid: 'demo-student', 
-        email: 'student@hostelify.com', 
-        role: 'student', 
-        name: 'Demo Student',
-        roomNumber: '204',
-        rollNumber: '2024CS101'
-      };
-      setCurrentUser(mockStudent);
-      setUserData(mockStudent);
-      return mockStudent;
-    }
-
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    if (userDoc.exists()) {
-      setUserData(userDoc.data());
-    }
-    return user;
   };
 
   const signup = async (email, password, role, additionalData) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    const profile = {
-      uid: user.uid,
-      email,
-      role,
-      ...additionalData,
-      createdAt: new Date().toISOString()
-    };
+    // Custom signup using separate students and admins tables
+    try {
+      const userId = role === 'admin' ? 'admin_' + Date.now() : 'student_' + Date.now();
+      const encryptedPassword = encryptPassword(password);
+      
+      const profile = {
+        uid: userId,
+        email,
+        password: encryptedPassword,
+        phone: additionalData.phone || '',
+        ...additionalData,
+        createdAt: new Date().toISOString()
+      };
 
-    await setDoc(doc(db, 'users', user.uid), profile);
-    setUserData(profile);
-    return user;
+      // Save to appropriate table based on role
+      const tablePath = role === 'admin' ? 'admins/' + userId : 'students/' + userId;
+      await set(ref(realtimeDB, tablePath), profile);
+      
+      setUserData({ ...profile, role });
+      return profile;
+    } catch (error) {
+      throw new Error('Signup failed: ' + error.message);
+    }
   };
 
   const logout = () => {
     setCurrentUser(null);
     setUserData(null);
-    return signOut(auth);
+    // Remove auth cookie
+    removeAuthCookie();
+    return Promise.resolve();
   };
 
   const resetPassword = (email) => {
-    return sendPasswordResetEmail(auth, email);
+    return Promise.reject(new Error('Password reset not available with custom authentication'));
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setCurrentUser(user);
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data());
-        }
-      } else {
-        // Only clear if not in a demo session
-        if (!currentUser?.uid?.startsWith('demo-')) {
-          setCurrentUser(null);
-          setUserData(null);
+    // Check for existing token in cookie on app load
+    const initializeAuth = () => {
+      const token = getAuthCookie();
+      if (token) {
+        const decodedToken = verifyToken(token);
+        if (decodedToken) {
+          // User is authenticated, set user data from token
+          setCurrentUser(decodedToken);
+          setUserData(decodedToken);
+        } else {
+          // Invalid token, remove cookie
+          removeAuthCookie();
         }
       }
       setLoading(false);
-    });
+    };
 
-    return unsubscribe;
-  }, [currentUser]);
+    initializeAuth();
+  }, []);
 
   const value = {
     currentUser,

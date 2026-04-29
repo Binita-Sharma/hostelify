@@ -27,12 +27,38 @@ import AdminRooms from './pages/admin/Rooms';
 import AdminFees from './pages/admin/Fees';
 import AdminMess from './pages/admin/Mess';
 
+
+
 const ProtectedRoute = ({ children, role }) => {
   const { currentUser, userData, loading } = useAuth();
 
   if (loading) return <div>Loading...</div>;
+  
+  // Check if user is authenticated via token
   if (!currentUser) return <Navigate to="/login" />;
-  if (role && userData?.role !== role) return <Navigate to="/" />;
+  
+  // Check role-based access
+  if (role && userData?.role !== role) {
+    return <Navigate to="/" />;
+  }
+
+  return children;
+};
+
+const PublicRoute = ({ children }) => {
+  const { currentUser, userData, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+  
+  // If user is already logged in, redirect to appropriate dashboard
+  if (currentUser) {
+    if (userData?.role === 'admin') {
+      return <Navigate to="/admin" />;
+    } else if (userData?.role === 'student') {
+      return <Navigate to="/student" />;
+    }
+    return <Navigate to="/" />;
+  }
 
   return children;
 };
@@ -43,10 +69,22 @@ function App() {
       <AuthProvider>
         <Routes>
           {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-
+          <Route path="/login" element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } />
+          <Route path="/signup" element={
+            <PublicRoute>
+              <Signup />
+            </PublicRoute>
+          } />
+          <Route path="/forgot-password" element={
+            <PublicRoute>
+              <ForgotPassword />
+            </PublicRoute>
+          } />
+          
           {/* Student Routes */}
           <Route path="/student/*" element={
             <ProtectedRoute role="student">

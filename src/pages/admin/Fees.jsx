@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../services/firebase';
-import { collection, query, onSnapshot, doc, updateDoc, deleteDoc, addDoc, orderBy } from 'firebase/firestore';
+import { realtimeDB } from '../../services/firebase';
+import { ref, onValue, update, remove, set } from 'firebase/database';
 import { Plus, CheckCircle, Trash2, ChevronDown, X } from 'lucide-react';
 import './Fees.css';
 
@@ -18,12 +18,15 @@ const AdminFees = () => {
   });
 
   useEffect(() => {
-    const q = query(collection(db, 'fees'), orderBy('due', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    const feesRef = ref(realtimeDB, 'fees');
+    const unsubscribe = onValue(feesRef, (snapshot) => {
+      const fees = snapshot.val();
+      const data = fees ? Object.entries(fees)
+        .map(([id, fee]) => ({
+          id,
+          ...fee
+        }))
+        .sort((a, b) => new Date(b.due) - new Date(a.due)) : [];
       setFeeRecords(data);
       setLoading(false);
     });
@@ -40,20 +43,20 @@ const AdminFees = () => {
 
   const handleToggleStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === 'paid' ? 'pending' : 'paid';
-    const docRef = doc(db, 'fees', id);
-    await updateDoc(docRef, { status: newStatus });
+    await update(ref(realtimeDB, 'fees/' + id), { status: newStatus });
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this record?')) {
-      await deleteDoc(doc(db, 'fees', id));
+      await remove(ref(realtimeDB, 'fees/' + id));
     }
   };
 
   const handleCreateFee = async (e) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'fees'), {
+      const feeId = 'fee_' + Date.now();
+      await set(ref(realtimeDB, 'fees/' + feeId), {
         ...newFee,
         amount: Number(newFee.amount),
         status: 'pending',
@@ -62,7 +65,7 @@ const AdminFees = () => {
       setIsModalOpen(false);
       setNewFee({ student: '', description: '', semester: '', amount: '', due: '' });
     } catch (error) {
-      console.error("Error adding document: ", error);
+      console.error("Error adding fee record: ", error);
     }
   };
 
