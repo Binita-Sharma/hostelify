@@ -7,7 +7,7 @@ import {
   signOut,
   sendPasswordResetEmail
 } from 'firebase/auth';
-import { ref, get, set } from 'firebase/database';
+import { ref, get, set, update } from 'firebase/database';
 import { generateToken, verifyToken, setAuthCookie, getAuthCookie, removeAuthCookie, getUserFromToken } from '../utils/auth';
 
 const AuthContext = createContext();
@@ -100,6 +100,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUserProfile = async (newData) => {
+    try {
+      if (!currentUser || !userData) return;
+      
+      const tablePath = userData.role === 'admin' ? 'admins/' + currentUser.uid : 'students/' + currentUser.uid;
+      const userRef = ref(realtimeDB, tablePath);
+      
+      await update(userRef, newData);
+      
+      const updatedUser = { ...userData, ...newData };
+      setUserData(updatedUser);
+      setCurrentUser(updatedUser);
+      
+      const token = generateToken(updatedUser);
+      setAuthCookie(token);
+      
+      return updatedUser;
+    } catch (error) {
+      throw new Error('Profile update failed: ' + error.message);
+    }
+  };
+
   const logout = () => {
     setCurrentUser(null);
     setUserData(null);
@@ -140,6 +162,7 @@ export const AuthProvider = ({ children }) => {
     signup,
     logout,
     resetPassword,
+    updateUserProfile,
     loading
   };
 

@@ -13,7 +13,8 @@ import {
   Bell,
   Search,
   ChevronDown,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Megaphone
 } from 'lucide-react';
 import './Layout.css';
 
@@ -38,6 +39,7 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/fees', icon: <CreditCard size={20} />, label: 'Fees' },
     { path: '/admin/complaints', icon: <MessageSquare size={20} />, label: 'Complaints' },
     { path: '/admin/mess', icon: <UtensilsCrossed size={20} />, label: 'Mess' },
+    { path: '/admin/notices', icon: <Megaphone size={20} />, label: 'Notices' },
   ];
 
   return (

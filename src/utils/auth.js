@@ -9,10 +9,7 @@ export const generateToken = (user) => {
   };
   
   const payload = {
-    uid: user.uid,
-    email: user.email,
-    role: user.role || 'student',
-    name: user.name,
+    ...user,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours expiration
   };

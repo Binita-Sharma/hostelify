@@ -13,7 +13,9 @@ import {
   Bell,
   Search,
   ChevronDown,
-  UtensilsCrossed
+  UtensilsCrossed,
+  HeartPulse,
+  Shirt
 } from 'lucide-react';
 import AIChatbot from '../components/student/AIChatbot';
 import './Layout.css';
@@ -38,6 +40,8 @@ const StudentLayout = ({ children }) => {
     { path: '/student/fees', icon: <CreditCard size={20} />, label: 'Fees' },
     { path: '/student/complaints', icon: <MessageSquare size={20} />, label: 'Complaints' },
     { path: '/student/mess', icon: <UtensilsCrossed size={20} />, label: 'Mess' },
+    { path: '/student/doctors', icon: <HeartPulse size={20} />, label: 'Doctors' },
+    { path: '/student/laundry', icon: <Shirt size={20} />, label: 'Laundry' },
     { path: '/student/profile', icon: <User size={20} />, label: 'Profile' },
   ];
 

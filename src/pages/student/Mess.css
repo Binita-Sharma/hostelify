@@ -12,7 +12,7 @@
 }
 
 .timing-card {
-  background-color: white;
+  background-color: var(--bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   padding: 20px;
@@ -66,13 +66,13 @@
 }
 
 .tab-btn.active {
-  background-color: white;
+  background-color: var(--bg-card);
   color: var(--text-main);
   box-shadow: var(--shadow-sm);
 }
 
 .menu-display {
-  background-color: white;
+  background-color: var(--bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   min-height: 400px;
@@ -186,7 +186,7 @@
 
 .submit-btn {
   background-color: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
   padding: 12px 32px;
   border-radius: var(--radius-md);
   font-weight: 700;

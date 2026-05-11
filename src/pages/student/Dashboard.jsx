@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../services/firebase';
+import { db, realtimeDB } from '../../services/firebase';
 import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { ref, onValue } from 'firebase/database';
 import { 
   Home, 
   CreditCard, 
@@ -9,62 +11,168 @@ import {
   Bell, 
   ArrowRight,
   Clock,
-  ChevronRight
+  ChevronRight,
+  Mail,
+  Phone,
+  BookOpen,
+  Shirt,
+  Brush,
+  HeartPulse,
+  Sparkles
 } from 'lucide-react';
 import './Dashboard.css';
 
+const authoritiesData = [
+  {
+    title: 'HEAD WARDEN',
+    name: 'Dr. Ramesh Kumar',
+    designation: 'Chief Warden',
+    department: 'Hostel Administration',
+    email: 'NA',
+    phone: '9876543210',
+    image: 'https://randomuser.me/api/portraits/men/45.jpg',
+    queryText: 'In case of any query/issue related to "Hostel Rules",',
+    hasClickHere: true
+  },
+  {
+    title: 'SUB WARDEN',
+    name: 'Mr. Arvind Sharma',
+    designation: 'Assistant Warden',
+    department: 'Hostel Administration',
+    email: 'NA',
+    phone: '9876543211',
+    image: 'https://randomuser.me/api/portraits/men/32.jpg',
+    queryText: '',
+    hasClickHere: false
+  },
+  {
+    title: 'ASSISTANT WARDEN',
+    name: 'Ms. Priya Singh',
+    designation: 'Assistant Warden',
+    department: 'Hostel Administration',
+    email: 'NA',
+    phone: '9876543212',
+    image: 'https://randomuser.me/api/portraits/women/44.jpg',
+    queryText: '',
+    hasClickHere: false
+  },
+  {
+    title: 'MESS MANAGER',
+    name: 'Mr. Vikram Verma',
+    designation: 'Chief Catering Officer',
+    department: 'Food & Beverage',
+    email: 'NA',
+    phone: '9876543213',
+    image: 'https://randomuser.me/api/portraits/men/65.jpg',
+    queryText: '',
+    hasClickHere: false
+  }
+];
+
 const Dashboard = () => {
   const { userData } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     room: 'Not Assigned',
     roomDetail: 'Contact Admin',
     feesPending: 0,
     activeComplaints: 0,
+    activeNotices: 0,
   });
   const [recentComplaints, setRecentComplaints] = useState([]);
+  const [recentNotices, setRecentNotices] = useState([]);
 
   useEffect(() => {
     if (!userData?.name) return;
 
     // 1. Room Assignment
-    const unsubscribeRoom = onSnapshot(
-      query(collection(db, 'rooms'), where('students', 'array-contains', userData.name)),
-      (snap) => {
-        if (!snap.empty) {
-          const room = snap.docs[0].data();
-          setStats(prev => ({ 
-            ...prev, 
-            room: `Room ${room.number}`,
-            roomDetail: `${room.type} • Block ${room.block}`
-          }));
+    const roomsRef = ref(realtimeDB, 'rooms');
+    const unsubscribeRoom = onValue(roomsRef, (snapshot) => {
+      let foundRoom = null;
+      if (snapshot.exists()) {
+        const rooms = snapshot.val();
+        for (const key in rooms) {
+          const room = rooms[key];
+          if (room.students && room.students.includes(userData.name)) {
+            foundRoom = room;
+            break;
+          }
         }
       }
-    );
+      
+      if (foundRoom) {
+        setStats(prev => ({ 
+          ...prev, 
+          room: `Room ${foundRoom.number}`,
+          roomDetail: `${foundRoom.type} • Block ${foundRoom.block}`
+        }));
+      } else {
+        setStats(prev => ({ 
+          ...prev, 
+          room: 'Not Assigned',
+          roomDetail: 'Contact Admin'
+        }));
+      }
+    });
 
     // 2. Fees Pending
-    const unsubscribeFees = onSnapshot(
-      query(collection(db, 'fees'), where('student', '==', userData.name), where('status', '==', 'pending')),
-      (snap) => {
-        const total = snap.docs.reduce((sum, d) => sum + (Number(d.data().amount) || 0), 0);
-        setStats(prev => ({ ...prev, feesPending: total }));
+    const feesRef = ref(realtimeDB, 'fees');
+    const unsubscribeFees = onValue(feesRef, (snapshot) => {
+      let total = 0;
+      if (snapshot.exists()) {
+        const fees = snapshot.val();
+        for (const key in fees) {
+          const fee = fees[key];
+          if (fee.student === userData.name && fee.status === 'pending') {
+            total += Number(fee.amount) || 0;
+          }
+        }
       }
-    );
+      setStats(prev => ({ ...prev, feesPending: total }));
+    });
 
     // 3. Active Complaints
-    const unsubscribeComplaints = onSnapshot(
-      query(collection(db, 'complaints'), where('studentName', '==', userData.name), orderBy('createdAt', 'desc')),
-      (snap) => {
-        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const active = data.filter(c => c.status !== 'Resolved').length;
-        setStats(prev => ({ ...prev, activeComplaints: active }));
-        setRecentComplaints(data.slice(0, 3));
+    const complaintsRef = ref(realtimeDB, 'complaints');
+    const unsubscribeComplaints = onValue(complaintsRef, (snapshot) => {
+      let active = 0;
+      let data = [];
+      if (snapshot.exists()) {
+        const complaints = snapshot.val();
+        for (const key in complaints) {
+          const c = { id: key, ...complaints[key] };
+          if (c.studentName === userData.name) {
+            data.push(c);
+            if (c.status !== 'Resolved') {
+              active++;
+            }
+          }
+        }
       }
-    );
+      data.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      setStats(prev => ({ ...prev, activeComplaints: active }));
+      setRecentComplaints(data.slice(0, 3));
+    });
+
+    // 4. Notices
+    const noticesRef = ref(realtimeDB, 'notices');
+    const unsubscribeNotices = onValue(noticesRef, (snapshot) => {
+      let data = [];
+      if (snapshot.exists()) {
+        const notices = snapshot.val();
+        for (const key in notices) {
+          data.push({ id: key, ...notices[key] });
+        }
+      }
+      data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setStats(prev => ({ ...prev, activeNotices: data.length }));
+      setRecentNotices(data.slice(0, 3));
+    });
 
     return () => {
       unsubscribeRoom();
       unsubscribeFees();
       unsubscribeComplaints();
+      unsubscribeNotices();
     };
   }, [userData]);
 
@@ -123,8 +231,8 @@ const Dashboard = () => {
           <div className="stat-icon"><Bell size={24} /></div>
           <div className="stat-info">
             <span className="stat-label">Announcements</span>
-            <h3 className="stat-value">0</h3>
-            <span className="stat-detail">No new notices</span>
+            <h3 className="stat-value">{stats.activeNotices}</h3>
+            <span className="stat-detail">{stats.activeNotices > 0 ? 'New updates' : 'No new notices'}</span>
           </div>
           <div className="stat-trend"><ChevronRight size={20} /></div>
         </div>
@@ -156,19 +264,66 @@ const Dashboard = () => {
 
         <section className="dashboard-section notices-preview">
           <div className="section-header">
-            <h2>Upcoming Events</h2>
+            <h2>Notices & Events</h2>
             <button className="view-all">View All <ArrowRight size={16} /></button>
           </div>
           <div className="notices-list">
-            <div className="notice-card">
-              <div className="notice-date">
-                <span className="day">01</span>
-                <span className="month">MAY</span>
+            {recentNotices.length === 0 ? (
+              <p className="empty-msg">No announcements at the moment.</p>
+            ) : (
+              recentNotices.map(notice => {
+                const noticeDate = new Date(notice.createdAt || Date.now());
+                const day = noticeDate.getDate().toString().padStart(2, '0');
+                const month = noticeDate.toLocaleString('default', { month: 'short' }).toUpperCase();
+                
+                return (
+                  <div key={notice.id} className={`notice-card ${notice.category}`}>
+                    <div className="notice-date">
+                      <span className="day">{day}</span>
+                      <span className="month">{month}</span>
+                    </div>
+                    <div className="notice-content">
+                      <h4>{notice.title}</h4>
+                      <p>{notice.content.length > 50 ? notice.content.substring(0, 50) + '...' : notice.content}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+
+        <section className="dashboard-section hostel-facilities">
+          <div className="section-header">
+            <h2>Hostel Facilities</h2>
+            <Sparkles size={18} className="icon-sparkle" />
+          </div>
+          <div className="facilities-grid">
+            <div className="facility-card laundry" onClick={() => navigate('/student/laundry')}>
+              <div className="facility-icon"><Shirt size={20} /></div>
+              <div className="facility-info">
+                <h4>Laundary</h4>
+                <p>Clean clothes, daily</p>
               </div>
-              <div className="notice-content">
-                <h4>Mess Menu Update</h4>
-                <p>New menu will be effective from tomorrow...</p>
+              <ChevronRight size={16} />
+            </div>
+            
+            <div className="facility-card housekeeping">
+              <div className="facility-icon"><Brush size={20} /></div>
+              <div className="facility-info">
+                <h4>Housekeeping</h4>
+                <p>Request room cleaning</p>
               </div>
+              <ChevronRight size={16} />
+            </div>
+
+            <div className="facility-card doctor" onClick={() => navigate('/student/doctors')}>
+              <div className="facility-icon"><HeartPulse size={20} /></div>
+              <div className="facility-info">
+                <h4>Doctor Appt.</h4>
+                <p>Book medical checkup</p>
+              </div>
+              <ChevronRight size={16} />
             </div>
           </div>
         </section>
@@ -182,6 +337,50 @@ const Dashboard = () => {
           </div>
         </section>
       </div>
+
+      <section className="authorities-section">
+        <h2 className="section-title">Authorities & Contacts</h2>
+        <div className="authorities-grid">
+          {authoritiesData.map((auth, index) => (
+            <div className="authority-card" key={index}>
+              <div className="auth-avatar-container">
+                <img src={auth.image} alt={auth.name} className="auth-avatar" />
+              </div>
+              
+              <div className="auth-title-bar">
+                <BookOpen size={14} className="auth-title-icon" />
+                <span>{auth.title}</span>
+              </div>
+              
+              <div className="auth-details">
+                <h4 className="auth-name">{auth.name}</h4>
+                <p className="auth-designation">{auth.designation}</p>
+                <p className="auth-department">{auth.department}</p>
+                
+                <div className="auth-contact-info">
+                  <div className="contact-item">
+                    <Mail size={12} />
+                    <span>{auth.email}</span>
+                  </div>
+                  <div className="contact-item">
+                    <Phone size={12} />
+                    <span>{auth.phone}</span>
+                  </div>
+                </div>
+                
+                <button className="book-appointment-btn">Book Appointment</button>
+                
+                {auth.hasClickHere && (
+                  <div className="auth-query-box">
+                    <p>{auth.queryText}</p>
+                    <button className="click-here-btn">Click Here</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };

@@ -1,27 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../services/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 import { User, Mail, Phone, Hash, Shield, Save, Camera } from 'lucide-react';
 import './Profile.css';
 
 const Profile = () => {
-  const { userData, currentUser } = useAuth();
+  const { userData, updateUserProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: userData?.name || '',
     phone: userData?.phone || '',
     emergencyContact: userData?.emergencyContact || '',
-    bloodGroup: userData?.bloodGroup || ''
+    bloodGroup: userData?.bloodGroup || '',
+    address: userData?.address || ''
   });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        name: userData.name || '',
+        phone: userData.phone || '',
+        emergencyContact: userData.emergencyContact || '',
+        bloodGroup: userData.bloodGroup || '',
+        address: userData.address || ''
+      });
+    }
+  }, [userData]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const userRef = doc(db, 'users', currentUser.uid);
-      await updateDoc(userRef, formData);
+      await updateUserProfile(formData);
       setIsEditing(false);
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -51,7 +61,7 @@ const Profile = () => {
             <div className="quick-stats">
               <div className="q-stat">
                 <span>Room</span>
-                <strong>{userData?.roomNumber || '204'}</strong>
+                <strong>{userData?.roomNumber || 'Not Assigned'}</strong>
               </div>
               <div className="q-stat">
                 <span>Roll No</span>
@@ -74,7 +84,19 @@ const Profile = () => {
               <h2>Personal Information</h2>
               <button 
                 className={`edit-btn ${isEditing ? 'cancel' : ''}`}
-                onClick={() => setIsEditing(!isEditing)}
+                onClick={() => {
+                  setIsEditing(!isEditing);
+                  if (isEditing && userData) {
+                    // Reset form data on cancel
+                    setFormData({
+                      name: userData.name || '',
+                      phone: userData.phone || '',
+                      emergencyContact: userData.emergencyContact || '',
+                      bloodGroup: userData.bloodGroup || '',
+                      address: userData.address || ''
+                    });
+                  }
+                }}
               >
                 {isEditing ? 'Cancel' : 'Edit Profile'}
               </button>
@@ -109,7 +131,7 @@ const Profile = () => {
                   <input type="text" value={userData?.rollNumber} readOnly />
                 </div>
                 <div className="form-group">
-                  <label>Emergency Contact</label>
+                  <label>Guardian Name / Emergency Contact</label>
                   <input 
                     type="text" 
                     value={isEditing ? formData.emergencyContact : (userData?.emergencyContact || 'Not provided')} 
@@ -126,6 +148,15 @@ const Profile = () => {
                     readOnly={!isEditing} 
                   />
                 </div>
+                <div className="form-group full-width">
+                  <label>Address</label>
+                  <input 
+                    type="text" 
+                    value={isEditing ? formData.address : (userData?.address || 'Not provided')} 
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    readOnly={!isEditing} 
+                  />
+                </div>
               </div>
 
               {isEditing && (
@@ -137,6 +168,74 @@ const Profile = () => {
                 </div>
               )}
             </form>
+          </div>
+
+          <div className="profile-card id-card-section">
+            <div className="card-header">
+              <h2>Virtual ID Card</h2>
+              <button className="download-btn">Download ID</button>
+            </div>
+            
+            <div className="id-card-wrapper">
+              <div className="virtual-id-card">
+                <div className="id-card-header">
+                  <div className="id-logo">
+                    <div className="logo-icon">H</div>
+                    <span>HOSTELIFY</span>
+                  </div>
+                  <div className="id-university">
+                    UNIVERSITY OF TECHNOLOGY
+                  </div>
+                </div>
+
+                <div className="id-card-body">
+                  <div className="id-photo-section">
+                    <div className="id-photo">
+                      {userData?.name?.charAt(0) || 'U'}
+                    </div>
+                  </div>
+                  
+                  <div className="id-info-section">
+                    <h1 className="id-title">STUDENT ID CARD</h1>
+                    <div className="id-details">
+                      <div className="id-row">
+                        <span className="label">Name</span>
+                        <span className="value">: {userData?.name}</span>
+                      </div>
+                      <div className="id-row">
+                        <span className="label">Student ID</span>
+                        <span className="value">: {userData?.rollNumber}</span>
+                      </div>
+                      <div className="id-row">
+                        <span className="label">Phone No</span>
+                        <span className="value">: {userData?.phone || 'N/A'}</span>
+                      </div>
+                      <div className="id-row">
+                        <span className="label">Blood Group</span>
+                        <span className="value">: {userData?.bloodGroup || 'N/A'}</span>
+                      </div>
+                      <div className="id-row">
+                        <span className="label">Guardian</span>
+                        <span className="value">: {userData?.emergencyContact || 'N/A'}</span>
+                      </div>
+                      <div className="id-row">
+                        <span className="label">Address</span>
+                        <span className="value">: {userData?.address || 'N/A'}</span>
+                      </div>
+                    </div>
+
+                    <div className="id-barcode">
+                      <div className="barcode-lines"></div>
+                      <span className="barcode-text">{userData?.rollNumber}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="id-card-footer">
+                  <div className="footer-wave"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

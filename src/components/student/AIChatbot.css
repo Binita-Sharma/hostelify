@@ -3,7 +3,7 @@
   bottom: 30px;
   right: 30px;
   background-color: var(--secondary);
-  color: white;
+  color: var(--text-on-primary);
   padding: 12px 24px;
   border-radius: var(--radius-full);
   display: flex;
@@ -34,7 +34,7 @@
   right: 30px;
   width: 380px;
   height: 500px;
-  background-color: white;
+  background-color: var(--bg-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-premium);
   display: flex;
@@ -47,7 +47,7 @@
 .chatbot-header {
   padding: 20px;
   background-color: var(--secondary);
-  color: white;
+  color: var(--text-on-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -70,7 +70,7 @@
 }
 
 .bot-title h4 {
-  color: white;
+  color: var(--text-on-primary);
   font-size: 15px;
   margin: 0;
 }
@@ -98,7 +98,7 @@
 
 .header-actions button {
   background: transparent;
-  color: white;
+  color: var(--text-on-primary);
   opacity: 0.7;
 }
 
@@ -139,12 +139,12 @@
 
 .user .message-bubble {
   background-color: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
   border-bottom-right-radius: 2px;
 }
 
 .bot .message-bubble {
-  background-color: white;
+  background-color: var(--bg-card);
   color: var(--text-main);
   border-bottom-left-radius: 2px;
   box-shadow: var(--shadow-sm);
@@ -156,7 +156,7 @@
   border-top: 1px solid var(--border);
   display: flex;
   gap: 12px;
-  background-color: white;
+  background-color: var(--bg-card);
 }
 
 .chatbot-input input {
@@ -172,7 +172,7 @@
   width: 40px;
   height: 40px;
   background-color: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;

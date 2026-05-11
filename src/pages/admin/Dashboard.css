@@ -27,7 +27,7 @@
 }
 
 .stat-card-v2 {
-  background-color: white;
+  background-color: var(--bg-card);
   padding: 24px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
@@ -55,10 +55,10 @@
 .card-icon.students { background-color: #f1f5f9; color: #64748b; }
 .card-icon.rooms { background-color: #fef2f2; color: #ef4444; opacity: 0.7; } /* Reddish */
 .card-icon.occupancy { background-color: #f0fdf4; color: #22c55e; }
-.card-icon.complaints { background-color: #fffbeb; color: #f59e0b; }
+.card-icon.complaints { background-color: var(--bg-card);beb; color: #f59e0b; }
 .card-icon.high-priority { background-color: #fef2f2; color: #ef4444; }
 .card-icon.resolved { background-color: #f0fdf4; color: #22c55e; }
-.card-icon.fees { background-color: #fff7ed; color: #f97316; }
+.card-icon.fees { background-color: var(--bg-card);7ed; color: #f97316; }
 .card-icon.collected { background-color: #f0fdf9; color: #14b8a6; }
 
 .card-content label {
@@ -94,7 +94,7 @@
 }
 
 .chart-box {
-  background-color: white;
+  background-color: var(--bg-card);
   padding: 32px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);

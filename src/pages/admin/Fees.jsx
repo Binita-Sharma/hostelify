@@ -9,6 +9,7 @@ const AdminFees = () => {
   const [filter, setFilter] = useState('All');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [studentsList, setStudentsList] = useState([]);
   const [newFee, setNewFee] = useState({
     student: '',
     description: '',
@@ -30,7 +31,19 @@ const AdminFees = () => {
       setFeeRecords(data);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    const studentsRef = ref(realtimeDB, 'students');
+    const unsubscribeStudents = onValue(studentsRef, (snapshot) => {
+      const studentsData = snapshot.val();
+      if (studentsData) {
+        setStudentsList(Object.values(studentsData));
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeStudents();
+    };
   }, []);
 
   const totalCollected = feeRecords
@@ -194,13 +207,16 @@ const AdminFees = () => {
             <form className="modal-form" onSubmit={handleCreateFee}>
               <div className="form-group">
                 <label>Student Name</label>
-                <input 
-                  type="text" 
+                <select 
                   required 
                   value={newFee.student} 
                   onChange={e => setNewFee({...newFee, student: e.target.value})} 
-                  placeholder="e.g. Aarav Sharma"
-                />
+                >
+                  <option value="">Select a student...</option>
+                  {studentsList.map(s => (
+                    <option key={s.uid} value={s.name}>{s.name} ({s.rollNumber || s.email})</option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
                 <label>Description</label>

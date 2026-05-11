@@ -45,10 +45,10 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     // 1. Students Count
-    const studentsRef = ref(realtimeDB, 'users');
+    const studentsRef = ref(realtimeDB, 'students');
     const unsubscribeStudents = onValue(studentsRef, (snap) => {
-      const users = snap.val();
-      const students = users ? Object.values(users).filter(u => u.role === 'student').length : 0;
+      const studentsData = snap.val();
+      const students = studentsData ? Object.values(studentsData).length : 0;
       setStats(prev => ({ ...prev, students }));
     });
 

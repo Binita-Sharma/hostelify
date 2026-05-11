@@ -18,6 +18,8 @@ import StudentFees from './pages/student/Fees';
 import StudentRoom from './pages/student/Room';
 import StudentProfile from './pages/student/Profile';
 import StudentMess from './pages/student/Mess';
+import StudentDoctors from './pages/student/Doctors';
+import StudentLaundry from './pages/student/Laundry';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -26,17 +28,16 @@ import AdminComplaints from './pages/admin/Complaints';
 import AdminRooms from './pages/admin/Rooms';
 import AdminFees from './pages/admin/Fees';
 import AdminMess from './pages/admin/Mess';
-
-
+import AdminNotices from './pages/admin/Notices';
 
 const ProtectedRoute = ({ children, role }) => {
   const { currentUser, userData, loading } = useAuth();
 
   if (loading) return <div>Loading...</div>;
-  
+
   // Check if user is authenticated via token
   if (!currentUser) return <Navigate to="/login" />;
-  
+
   // Check role-based access
   if (role && userData?.role !== role) {
     return <Navigate to="/" />;
@@ -49,7 +50,7 @@ const PublicRoute = ({ children }) => {
   const { currentUser, userData, loading } = useAuth();
 
   if (loading) return <div>Loading...</div>;
-  
+
   // If user is already logged in, redirect to appropriate dashboard
   if (currentUser) {
     if (userData?.role === 'admin') {
@@ -84,7 +85,7 @@ function App() {
               <ForgotPassword />
             </PublicRoute>
           } />
-          
+
           {/* Student Routes */}
           <Route path="/student/*" element={
             <ProtectedRoute role="student">
@@ -96,7 +97,9 @@ function App() {
                   <Route path="room" element={<StudentRoom />} />
                   <Route path="profile" element={<StudentProfile />} />
                   <Route path="mess" element={<StudentMess />} />
-                  <Route path="*" element={<Navigate to="dashboard" />} />
+                  <Route path="doctors" element={<StudentDoctors />} />
+                  <Route path="laundry" element={<StudentLaundry />} />
+                  <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
                 </Routes>
               </StudentLayout>
             </ProtectedRoute>
@@ -113,6 +116,7 @@ function App() {
                   <Route path="rooms" element={<AdminRooms />} />
                   <Route path="fees" element={<AdminFees />} />
                   <Route path="mess" element={<AdminMess />} />
+                  <Route path="notices" element={<AdminNotices />} />
                   <Route path="*" element={<Navigate to="dashboard" />} />
                 </Routes>
               </AdminLayout>

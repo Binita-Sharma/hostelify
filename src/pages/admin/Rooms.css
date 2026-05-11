@@ -6,7 +6,7 @@
 
 .add-room-btn-v2 {
   background-color: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
   padding: 10px 24px;
   border-radius: var(--radius-md);
   display: flex;
@@ -28,7 +28,7 @@
 }
 
 .room-card-v2 {
-  background-color: white;
+  background-color: var(--bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   padding: 24px;
@@ -120,7 +120,7 @@
   gap: 8px;
   padding: 8px 16px;
   border-radius: var(--radius-md);
-  background-color: white;
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-secondary);
   font-size: 13px;
@@ -174,4 +174,284 @@
   align-items: center;
   gap: 12px;
   font-weight: 600;
+}
+
+/* Room Details Modal */
+.details-modal-content {
+  background-color: var(--bg-card);
+  width: 100%;
+  max-width: 1100px;
+  max-height: 90vh;
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+}
+
+.details-modal-header {
+  padding: 32px;
+  background-color: var(--bg-main);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.room-info-large {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.number-box {
+  background-color: var(--primary);
+  color: white;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-size: 1.5rem;
+  font-weight: 800;
+  box-shadow: 0 8px 16px rgba(186, 73, 73, 0.2);
+}
+
+.meta-info h2 {
+  font-size: 1.75rem;
+  margin-bottom: 4px;
+}
+
+.meta-info span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.close-btn-circle {
+  background: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-fast);
+}
+
+.close-btn-circle:hover {
+  transform: rotate(90deg);
+  color: var(--error);
+}
+
+.details-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 450px;
+  gap: 32px;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+@media (max-width: 992px) {
+  .details-modal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.details-left {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.members-section h3, .room-specs h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: var(--text-main);
+}
+
+.members-list {
+  background-color: var(--bg-main);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.member-row {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.member-row:last-child {
+  border-bottom: none;
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: white;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  box-shadow: var(--shadow-sm);
+}
+
+.member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.member-roll {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.member-contact {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.spec-item {
+  background-color: white;
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.spec-item label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.spec-item span {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.spec-item span.full { color: var(--error); }
+.spec-item span.available { color: #16a34a; }
+
+/* Electricity Admin View */
+.energy-usage-card.admin-view {
+  background-color: white;
+  padding: 24px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.energy-usage-card h2 {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.energy-tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  gap: 4px;
+}
+
+.energy-tab {
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  color: #64748b;
+}
+
+.energy-tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.energy-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.appliance-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.appliance-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.appliance-btn.active.fan { background: #eff6ff; color: #3b82f6; }
+.appliance-btn.active.ac { background: #f0fdf4; color: #16a34a; }
+
+.energy-metrics {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+
+.metric .metric-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.metric-value-group .value {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.energy-chart-container {
+  margin-top: 20px;
+  height: 150px;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

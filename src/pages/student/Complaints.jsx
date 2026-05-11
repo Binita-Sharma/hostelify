@@ -21,6 +21,8 @@ const Complaints = () => {
   const { userData } = useAuth();
   const [complaints, setComplaints] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [loading, setLoading] = useState(false);
   const [newComplaint, setNewComplaint] = useState({
     title: '',
@@ -160,7 +162,13 @@ const Complaints = () => {
                     <div className={`step ${['In Progress', 'Resolved'].includes(item.status) ? 'active' : ''}`}></div>
                     <div className={`step ${item.status === 'Resolved' ? 'active' : ''}`}></div>
                   </div>
-                  <button className="details-btn">
+                  <button 
+                    className="details-btn"
+                    onClick={() => {
+                      setSelectedComplaint(item);
+                      setShowDetailModal(true);
+                    }}
+                  >
                     Details <ChevronRight size={16} />
                   </button>
                 </div>
@@ -231,6 +239,63 @@ const Complaints = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Tracking Modal */}
+      {showDetailModal && selectedComplaint && (
+        <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
+          <div className="modal-content detail-modal animate-fade-in" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Complaint Tracking</h2>
+              <button className="close-btn" onClick={() => setShowDetailModal(false)}><X size={24} /></button>
+            </div>
+            
+            <div className="complaint-detail-body">
+              <div className="cd-header">
+                <h3>{selectedComplaint.title}</h3>
+                <span className={`status-badge ${getStatusColor(selectedComplaint.status)}`}>
+                  {selectedComplaint.status}
+                </span>
+              </div>
+              <div className="cd-meta">
+                <span className="cd-id">#{selectedComplaint.id.slice(0, 6).toUpperCase()}</span>
+                <span className="dot">•</span>
+                <span className="cd-date">{new Date(selectedComplaint.createdAt).toLocaleString()}</span>
+                <span className="dot">•</span>
+                <span className="cd-cat">{selectedComplaint.category}</span>
+              </div>
+              <div className="cd-desc-box">
+                <h4>Description</h4>
+                <p>{selectedComplaint.description}</p>
+              </div>
+
+              <div className="tracking-timeline">
+                <h4>Tracking History</h4>
+                <div className="timeline-container">
+                  {(selectedComplaint.updates || [{
+                    status: 'Pending',
+                    message: 'Complaint submitted successfully',
+                    time: selectedComplaint.createdAt
+                  }]).map((update, idx, arr) => (
+                    <div key={idx} className={`timeline-item ${idx === arr.length - 1 ? 'current' : ''}`}>
+                      <div className="timeline-marker">
+                        <div className={`marker-dot ${getStatusColor(update.status)}`}></div>
+                        {idx !== arr.length - 1 && <div className="marker-line"></div>}
+                      </div>
+                      <div className="timeline-content">
+                        <div className="tl-header">
+                          <span className="tl-status">{update.status}</span>
+                          <span className="tl-time">{new Date(update.time).toLocaleString()}</span>
+                        </div>
+                        <p className="tl-message">{update.message}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

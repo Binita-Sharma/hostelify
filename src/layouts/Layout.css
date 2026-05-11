@@ -47,7 +47,7 @@
   width: 32px;
   height: 32px;
   background-color: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,7 +93,7 @@
 
 .nav-link.active {
   background-color: var(--primary);
-  color: white;
+  color: var(--text-on-primary);
 }
 
 .sidebar.closed .nav-link span {
@@ -147,7 +147,7 @@
 /* Topbar */
 .topbar {
   height: 70px;
-  background-color: white;
+  background-color: var(--bg-card);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -223,7 +223,7 @@
   height: 8px;
   background-color: var(--primary);
   border-radius: 50%;
-  border: 2px solid white;
+  border: 2px solid var(--bg-card);
 }
 
 .user-profile {

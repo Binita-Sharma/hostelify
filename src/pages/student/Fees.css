@@ -34,7 +34,7 @@
 }
 
 .stat-card {
-  background: white;
+  background: var(--bg-card);
   padding: 24px;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
@@ -58,7 +58,7 @@
 }
 
 .icon-wrapper.pending {
-  background-color: #fffbeb;
+  background-color: var(--bg-card);beb;
   color: #92400e;
 }
 
@@ -89,7 +89,7 @@
 
 /* Table Card */
 .fees-content-card {
-  background: white;
+  background: var(--bg-card);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.03);
   overflow: hidden;
@@ -141,7 +141,7 @@
 }
 
 .status-badge.pending {
-  background-color: #fff9c4;
+  background-color: var(--bg-card);9c4;
   color: #fbc02d;
 }
 
@@ -159,7 +159,7 @@
 
 .pay-now-btn {
   background-color: #b45d4f;
-  color: white;
+  color: var(--text-on-primary);
   border: none;
   padding: 6px 16px;
   border-radius: 6px;
