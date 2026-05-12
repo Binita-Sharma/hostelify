@@ -15,7 +15,9 @@ import {
   Zap,
   DollarSign,
   MapPin,
-  Users
+  Users,
+  Sparkles,
+  Clock
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Rooms.css';
@@ -30,6 +32,9 @@ const AdminRooms = () => {
   const [loading, setLoading] = useState(false);
   const [activeEnergyTab, setActiveEnergyTab] = useState('Week');
   const [activeAppliance, setActiveAppliance] = useState('Fan');
+  const [housekeepers, setHousekeepers] = useState([]);
+  const [hkAssignments, setHkAssignments] = useState({});
+  const [hkSchedules, setHkSchedules] = useState({});
   
   // Simulated electricity data
   const chartData = [
@@ -68,11 +73,41 @@ const AdminRooms = () => {
       setStudents(data);
     });
 
-    return () => { unsubscribeRooms(); unsubscribeStudents(); };
+    const hkRef = ref(realtimeDB, 'housekeepers');
+    const unsubscribeHK = onValue(hkRef, (snapshot) => {
+      const data = snapshot.val();
+      setHousekeepers(data ? Object.entries(data).map(([id, hk]) => ({ id, ...hk })) : []);
+    });
+
+    const hkAssignRef = ref(realtimeDB, 'housekeeping_assignments');
+    const unsubscribeHKAssign = onValue(hkAssignRef, (snapshot) => {
+      setHkAssignments(snapshot.val() || {});
+    });
+
+    const hkSchedRef = ref(realtimeDB, 'housekeeping_schedules');
+    const unsubscribeHKSched = onValue(hkSchedRef, (snapshot) => {
+      setHkSchedules(snapshot.val() || {});
+    });
+
+    return () => { 
+      unsubscribeRooms(); 
+      unsubscribeStudents();
+      unsubscribeHK();
+      unsubscribeHKAssign();
+      unsubscribeHKSched();
+    };
   }, []);
 
   const handleAddRoom = async (e) => {
     e.preventDefault();
+
+    // Check for duplicate room number
+    const roomExists = rooms.some(room => room.number.toString() === newRoom.number.toString());
+    if (roomExists) {
+      alert("This room is already created");
+      return;
+    }
+
     setLoading(true);
     try {
       const roomId = 'room_' + Date.now();
@@ -99,22 +134,26 @@ const AdminRooms = () => {
     
     setLoading(true);
     try {
-      const updatedStudents = [...(selectedRoom.students || []), student.name];
+      const studentId = student.id;
+      const updatedStudents = [...(selectedRoom.students || []), { name: student.name, id: studentId }];
       
-      // Update Room
+      // 1. Update Room Record
       await update(ref(realtimeDB, 'rooms/' + selectedRoom.id), {
         students: updatedStudents,
         occupied: selectedRoom.occupied + 1
       });
 
-      // Update Student record
-      await update(ref(realtimeDB, 'students/' + student.id), {
-        roomNumber: selectedRoom.number
+      // 2. Update Student Profile (This is the critical part for sync)
+      console.log(`Linking room ${selectedRoom.number} to student ${studentId}`);
+      await update(ref(realtimeDB, `students/${studentId}`), {
+        roomNumber: selectedRoom.number.toString()
       });
 
+      alert(`Success: Room ${selectedRoom.number} linked to ${student.name}`);
       setShowAssignModal(false);
     } catch (err) {
-      console.error(err);
+      console.error('Assignment error:', err);
+      alert('Failed to assign student. Check console for details.');
     } finally {
       setLoading(false);
     }
@@ -160,12 +199,15 @@ const AdminRooms = () => {
               </div>
 
               <div className="assigned-students">
-                {room.students?.map((s, idx) => (
-                  <div key={idx} className="student-pill">
-                    <span>{s}</span>
-                    <User size={14} className="icon-prio" />
-                  </div>
-                ))}
+                {room.students?.map((s, idx) => {
+                  const name = typeof s === 'string' ? s : s.name;
+                  return (
+                    <div key={idx} className="student-pill">
+                      <span>{name}</span>
+                      <User size={14} className="icon-prio" />
+                    </div>
+                  );
+                })}
                 {(!room.students || room.students.length === 0) && (
                   <span className="no-students">Empty</span>
                 )}
@@ -272,14 +314,20 @@ const AdminRooms = () => {
                   <h3><Users size={18} /> Room Members</h3>
                   <div className="members-list">
                     {selectedRoom.students?.length > 0 ? (
-                      selectedRoom.students.map((studentName, idx) => {
-                        const studentData = students.find(s => s.name === studentName);
+                      selectedRoom.students.map((studentObj, idx) => {
+                        // Handle both old string format and new object format
+                        const sName = typeof studentObj === 'string' ? studentObj : studentObj.name;
+                        const sId = typeof studentObj === 'string' ? null : studentObj.id;
+                        
+                        const studentData = students.find(s => s.name === sName || (sId && s.id === sId));
                         return (
                           <div key={idx} className="member-row">
-                            <div className="member-avatar">{studentName.charAt(0)}</div>
+                            <div className="member-avatar">{sName.charAt(0)}</div>
                             <div className="member-info">
-                              <span className="member-name">{studentName}</span>
-                              <span className="member-roll">{studentData?.rollNumber || 'N/A'}</span>
+                              <span className="member-name">{sName}</span>
+                              <span className="member-roll">
+                                {studentData?.rollNumber || 'N/A'} • ID: {studentData?.id || 'Unknown'}
+                              </span>
                             </div>
                             <div className="member-contact">{studentData?.phone || 'No phone'}</div>
                           </div>
@@ -304,6 +352,41 @@ const AdminRooms = () => {
                         {selectedRoom.occupied >= selectedRoom.capacity ? 'Fully Occupied' : 'Available'}
                       </span>
                     </div>
+                  </div>
+                </section>
+                
+                <section className="room-housekeeping-section">
+                  <h3><Sparkles size={18} /> Housekeeping</h3>
+                  <div className="hk-card-mini">
+                    {(() => {
+                      const blockId = selectedRoom.block;
+                      const floorNo = parseInt(selectedRoom.floor);
+                      const hkId = hkAssignments[blockId]?.[floorNo];
+                      const housekeeper = housekeepers.find(hk => hk.id === hkId);
+                      const schedule = hkSchedules[blockId]?.[floorNo];
+
+                      if (housekeeper || schedule) {
+                        return (
+                          <div className="hk-info-grid">
+                            <div className="hk-item">
+                              <label>Assigned Staff</label>
+                              <div className="hk-val">
+                                <User size={14} />
+                                <span>{housekeeper ? housekeeper.name : 'Not Assigned'}</span>
+                              </div>
+                            </div>
+                            <div className="hk-item">
+                              <label>Cleaning Schedule</label>
+                              <div className="hk-val">
+                                <Clock size={14} />
+                                <span>{schedule || 'Not Scheduled'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return <p className="no-members">No housekeeping data available for this floor.</p>;
+                    })()}
                   </div>
                 </section>
               </div>

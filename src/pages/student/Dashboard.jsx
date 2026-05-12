@@ -160,7 +160,11 @@ const Dashboard = () => {
       if (snapshot.exists()) {
         const notices = snapshot.val();
         for (const key in notices) {
-          data.push({ id: key, ...notices[key] });
+          const n = notices[key];
+          // Filter: Show global notices OR notices targeted at this specific student
+          if (!n.targetStudentId || n.targetStudentId === userData.uid) {
+            data.push({ id: key, ...n });
+          }
         }
       }
       data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -317,14 +321,6 @@ const Dashboard = () => {
               <ChevronRight size={16} />
             </div>
 
-            <div className="facility-card doctor" onClick={() => navigate('/student/doctors')}>
-              <div className="facility-icon"><HeartPulse size={20} /></div>
-              <div className="facility-info">
-                <h4>Doctor Appt.</h4>
-                <p>Book medical checkup</p>
-              </div>
-              <ChevronRight size={16} />
-            </div>
           </div>
         </section>
 

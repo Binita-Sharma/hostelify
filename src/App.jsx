@@ -18,8 +18,9 @@ import StudentFees from './pages/student/Fees';
 import StudentRoom from './pages/student/Room';
 import StudentProfile from './pages/student/Profile';
 import StudentMess from './pages/student/Mess';
-import StudentDoctors from './pages/student/Doctors';
 import StudentLaundry from './pages/student/Laundry';
+import StudentHousekeeping from './pages/student/Housekeeping';
+import StudentLeave from './pages/student/Leave';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -29,6 +30,9 @@ import AdminRooms from './pages/admin/Rooms';
 import AdminFees from './pages/admin/Fees';
 import AdminMess from './pages/admin/Mess';
 import AdminNotices from './pages/admin/Notices';
+import AdminHousekeeping from './pages/admin/Housekeeping';
+import AdminAttendance from './pages/admin/Attendance';
+import AdminLeave from './pages/admin/Leave';
 
 const ProtectedRoute = ({ children, role }) => {
   const { currentUser, userData, loading } = useAuth();
@@ -97,8 +101,9 @@ function App() {
                   <Route path="room" element={<StudentRoom />} />
                   <Route path="profile" element={<StudentProfile />} />
                   <Route path="mess" element={<StudentMess />} />
-                  <Route path="doctors" element={<StudentDoctors />} />
                   <Route path="laundry" element={<StudentLaundry />} />
+                  <Route path="housekeeping" element={<StudentHousekeeping />} />
+                  <Route path="leave" element={<StudentLeave />} />
                   <Route path="*" element={<Navigate to="/student/dashboard" replace />} />
                 </Routes>
               </StudentLayout>
@@ -117,6 +122,9 @@ function App() {
                   <Route path="fees" element={<AdminFees />} />
                   <Route path="mess" element={<AdminMess />} />
                   <Route path="notices" element={<AdminNotices />} />
+                  <Route path="housekeeping" element={<AdminHousekeeping />} />
+                  <Route path="attendance" element={<AdminAttendance />} />
+                  <Route path="leave" element={<AdminLeave />} />
                   <Route path="*" element={<Navigate to="dashboard" />} />
                 </Routes>
               </AdminLayout>

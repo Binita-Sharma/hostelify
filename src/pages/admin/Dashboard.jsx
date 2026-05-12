@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { realtimeDB } from '../../services/firebase';
 import { ref, onValue, get } from 'firebase/database';
 import { 
@@ -8,7 +9,8 @@ import {
   AlertTriangle, 
   CheckCircle2, 
   IndianRupee,
-  TrendingUp
+  TrendingUp,
+  Megaphone
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -26,6 +28,7 @@ import {
 import './Dashboard.css';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     students: 0,
     rooms: 0,
@@ -37,6 +40,7 @@ const AdminDashboard = () => {
     pendingFees: 0,
     collectedFees: 0
   });
+  const [recentNotices, setRecentNotices] = useState([]);
 
   const [complaintData, setComplaintData] = useState([]);
   const [feeData, setFeeData] = useState([]);
@@ -115,11 +119,21 @@ const AdminDashboard = () => {
       ]);
     });
 
+    // 5. Recent Notices
+    const noticesRef = ref(realtimeDB, 'notices');
+    const unsubscribeNotices = onValue(noticesRef, (snap) => {
+      const noticesData = snap.val();
+      const noticesArray = noticesData ? Object.entries(noticesData).map(([id, n]) => ({ id, ...n })) : [];
+      noticesArray.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setRecentNotices(noticesArray.slice(0, 4));
+    });
+
     return () => {
       unsubscribeStudents();
       unsubscribeRooms();
       unsubscribeComplaints();
       unsubscribeFees();
+      unsubscribeNotices();
     };
   }, []);
 
@@ -247,6 +261,38 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      <section className="dashboard-notices-section">
+        <div className="section-header-row">
+          <div className="section-title-box">
+            <Megaphone size={20} />
+            <h3>Recent Notices</h3>
+          </div>
+          <button className="view-all-link" onClick={() => navigate('/admin/notices')}>
+            View All Board
+          </button>
+        </div>
+
+        <div className="dashboard-notices-list">
+          {recentNotices.length === 0 ? (
+            <div className="empty-notices">No recent notices published.</div>
+          ) : (
+            recentNotices.map(notice => (
+              <div key={notice.id} className={`dashboard-notice-item ${notice.category}`}>
+                <div className="notice-item-date">
+                  <span className="day">{new Date(notice.createdAt).getDate()}</span>
+                  <span className="month">{new Date(notice.createdAt).toLocaleString('default', { month: 'short' })}</span>
+                </div>
+                <div className="notice-item-content">
+                  <h4>{notice.title}</h4>
+                  <p>{notice.content.substring(0, 100)}{notice.content.length > 100 ? '...' : ''}</p>
+                </div>
+                <div className={`notice-item-tag ${notice.category}`}>{notice.category}</div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
     </div>
   );
 };

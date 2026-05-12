@@ -455,3 +455,57 @@
 .animate-slide-up {
   animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Room Housekeeping Styles */
+.room-housekeeping-section {
+  margin-top: 32px;
+}
+
+.room-housekeeping-section h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: var(--text-main);
+}
+
+.hk-card-mini {
+  background-color: var(--bg-main);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  border: 1px solid var(--border);
+}
+
+.hk-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.hk-item label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.hk-val {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: white;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.hk-val span {
+  font-size: 14px;
+}
+

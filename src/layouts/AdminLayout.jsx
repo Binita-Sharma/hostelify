@@ -14,7 +14,10 @@ import {
   Search,
   ChevronDown,
   UtensilsCrossed,
-  Megaphone
+  Megaphone,
+  Sparkles,
+  UserCheck,
+  Plane
 } from 'lucide-react';
 import './Layout.css';
 
@@ -40,6 +43,10 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/complaints', icon: <MessageSquare size={20} />, label: 'Complaints' },
     { path: '/admin/mess', icon: <UtensilsCrossed size={20} />, label: 'Mess' },
     { path: '/admin/notices', icon: <Megaphone size={20} />, label: 'Notices' },
+    { type: 'section', label: 'Facilities' },
+    { path: '/admin/housekeeping', icon: <Sparkles size={20} />, label: 'Housekeeping' },
+    { path: '/admin/attendance', icon: <UserCheck size={20} />, label: 'Attendance' },
+    { path: '/admin/leave', icon: <Plane size={20} />, label: 'Hostel Leave' },
   ];
 
   return (
@@ -57,15 +64,21 @@ const AdminLayout = ({ children }) => {
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map((item) => (
-            <NavLink 
-              key={item.path} 
-              to={item.path} 
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </NavLink>
+          {menuItems.map((item, index) => (
+            item.type === 'section' ? (
+              <div key={`section-${index}`} className="sidebar-section-header">
+                {item.label}
+              </div>
+            ) : (
+              <NavLink 
+                key={item.path} 
+                to={item.path} 
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </NavLink>
+            )
           ))}
         </nav>
 

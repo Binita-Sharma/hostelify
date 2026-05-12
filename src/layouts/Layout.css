@@ -74,6 +74,19 @@
   flex-direction: column;
   gap: 4px;
 }
+  
+.sidebar-section-header {
+  padding: 16px 24px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.sidebar.closed .sidebar-section-header {
+  display: none;
+}
 
 .nav-link {
   display: flex;
