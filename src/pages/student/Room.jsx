@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { realtimeDB } from '../../services/firebase';
 import { ref, onValue } from 'firebase/database';
-import { Home, Users, Info, HelpCircle, MapPin, ShieldCheck, Fan, Snowflake, Wind, ChevronLeft, Zap, DollarSign } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Home, Users, Info, HelpCircle, MapPin, ShieldCheck } from 'lucide-react';
 import './Room.css';
 
 const Room = () => {
@@ -11,27 +10,7 @@ const Room = () => {
   const [roomDetails, setRoomDetails] = useState(null);
   const [roommates, setRoommates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('Week');
-  const [liveCost, setLiveCost] = useState(428.56);
-  const [activeAppliance, setActiveAppliance] = useState('Fan');
 
-  // Simulated live data for the chart
-  const [chartData, setChartData] = useState([
-    { name: 'M', value: 12 },
-    { name: 'T', value: 18 },
-    { name: 'W', value: 15 },
-    { name: 'T', value: 25 },
-    { name: 'F', value: 20 },
-    { name: 'S', value: 30 },
-    { name: 'S', value: 22 },
-  ]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLiveCost(prev => prev + (Math.random() * 0.05));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (!userData?.name) return;
@@ -45,16 +24,22 @@ const Room = () => {
         const rooms = snap.val();
         for (const key in rooms) {
           const room = rooms[key];
-          if (room.students && room.students.includes(userData.name)) {
-            currentRoom = room;
-            break;
+          if (room.students && Array.isArray(room.students)) {
+            const isAssigned = room.students.some(s => {
+              if (typeof s === 'string') return s === userData.name;
+              return s && (s.name === userData.name || s.id === userData.uid);
+            });
+            if (isAssigned) {
+              currentRoom = room;
+              break;
+            }
           }
         }
       }
       
       setRoomDetails(currentRoom);
 
-      if (!currentRoom || !currentRoom.students) {
+      if (!currentRoom || !currentRoom.students || currentRoom.students.length === 0) {
         setRoommates([]);
         setLoading(false);
         return;
@@ -63,7 +48,14 @@ const Room = () => {
       const unsubscribeStudents = onValue(studentsRef, (studentSnap) => {
         if (studentSnap.exists()) {
           const allStudents = studentSnap.val();
-          const roommateNames = currentRoom.students.filter(name => name !== userData.name);
+          
+          const roommateNames = currentRoom.students
+            .filter(s => {
+              const name = typeof s === 'string' ? s : s.name;
+              const id = typeof s === 'string' ? null : s.id;
+              return name !== userData.name && id !== userData.uid;
+            })
+            .map(s => typeof s === 'string' ? s : s.name);
           
           const roommateData = [];
           for (const key in allStudents) {
@@ -145,128 +137,12 @@ const Room = () => {
 
                 <div className="room-actions">
                   <button className="secondary-btn">Report Room Issue</button>
-                  <button className="primary-btn">Request Room Change</button>
                 </div>
               </>
             )}
           </div>
 
-          <div className="energy-usage-card">
-            <header className="energy-header">
-              <div className="energy-title-group">
-                <button className="back-circle"><ChevronLeft size={20} /></button>
-                <h2>Energy Usage</h2>
-              </div>
-              <div className="energy-tabs">
-                {['Day', 'Week', 'Month', 'Year'].map(tab => (
-                  <button 
-                    key={tab} 
-                    className={`energy-tab ${activeTab === tab ? 'active' : ''}`}
-                    onClick={() => setActiveTab(tab)}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-            </header>
 
-            <div className="energy-controls">
-              <div className="appliance-selector">
-                <button 
-                  className={`appliance-btn ${activeAppliance === 'Fan' ? 'active fan' : ''}`}
-                  onClick={() => setActiveAppliance('Fan')}
-                >
-                  <Wind size={18} />
-                  <span>Fan</span>
-                </button>
-                <button 
-                  className={`appliance-btn ${activeAppliance === 'AC' ? 'active ac' : ''}`}
-                  onClick={() => setActiveAppliance('AC')}
-                >
-                  <Snowflake size={18} />
-                  <span>AC</span>
-                </button>
-                <button 
-                  className={`appliance-btn ${activeAppliance === 'Cooler' ? 'active cooler' : ''}`}
-                  onClick={() => setActiveAppliance('Cooler')}
-                >
-                  <Zap size={18} />
-                  <span>Cooler</span>
-                </button>
-              </div>
-
-              <div className="unit-toggle">
-                <button className="unit-btn active"><DollarSign size={16} /></button>
-                <button className="unit-btn"><Zap size={16} /></button>
-              </div>
-            </div>
-
-            <div className="energy-metrics">
-              <div className="metric">
-                <span className="metric-label">Cost</span>
-                <div className="metric-value-group">
-                  <span className="currency">₹</span>
-                  <span className="value">{liveCost.toFixed(2)}</span>
-                  <span className="trend-up">↑</span>
-                </div>
-              </div>
-              <div className="metric">
-                <span className="metric-label">Electricity</span>
-                <div className="metric-value-group">
-                  <span className="value">45</span>
-                  <span className="unit">kWh</span>
-                </div>
-              </div>
-              <div className="metric">
-                <span className="metric-label">Appliance</span>
-                <div className="metric-value-group">
-                  <span className="value">{activeAppliance}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="energy-chart-container">
-              <div className="chart-info">
-                <span>This week, 30 Mar - 2 Apr</span>
-              </div>
-              <div className="main-chart">
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fill: '#9ca3af', fontSize: 12}} 
-                      dy={10}
-                    />
-                    <YAxis 
-                      hide 
-                      domain={[0, 'auto']} 
-                    />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                      cursor={{ stroke: '#3b82f6', strokeWidth: 2 }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#3b82f6" 
-                      strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorValue)" 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
 
           {roomDetails && (
             <section className="roommates-section">

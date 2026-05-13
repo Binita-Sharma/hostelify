@@ -82,7 +82,7 @@ const Profile = () => {
           <div className="profile-card edit-section">
             <div className="card-header">
               <h2>Personal Information</h2>
-              <button 
+              <button
                 className={`edit-btn ${isEditing ? 'cancel' : ''}`}
                 onClick={() => {
                   setIsEditing(!isEditing);
@@ -106,11 +106,11 @@ const Profile = () => {
               <div className="form-grid">
                 <div className="form-group">
                   <label><User size={14} /> Full Name</label>
-                  <input 
-                    type="text" 
-                    value={isEditing ? formData.name : userData?.name} 
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    readOnly={!isEditing} 
+                  <input
+                    type="text"
+                    value={isEditing ? formData.name : userData?.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    readOnly={!isEditing}
                   />
                 </div>
                 <div className="form-group">
@@ -119,11 +119,11 @@ const Profile = () => {
                 </div>
                 <div className="form-group">
                   <label><Phone size={14} /> Phone Number</label>
-                  <input 
-                    type="text" 
-                    value={isEditing ? formData.phone : (userData?.phone || 'Not provided')} 
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    readOnly={!isEditing} 
+                  <input
+                    type="text"
+                    value={isEditing ? formData.phone : (userData?.phone || 'Not provided')}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    readOnly={!isEditing}
                   />
                 </div>
                 <div className="form-group">
@@ -132,29 +132,29 @@ const Profile = () => {
                 </div>
                 <div className="form-group">
                   <label>Guardian Name / Emergency Contact</label>
-                  <input 
-                    type="text" 
-                    value={isEditing ? formData.emergencyContact : (userData?.emergencyContact || 'Not provided')} 
-                    onChange={(e) => setFormData({...formData, emergencyContact: e.target.value})}
-                    readOnly={!isEditing} 
+                  <input
+                    type="text"
+                    value={isEditing ? formData.emergencyContact : (userData?.emergencyContact || 'Not provided')}
+                    onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
+                    readOnly={!isEditing}
                   />
                 </div>
                 <div className="form-group">
                   <label>Blood Group</label>
-                  <input 
-                    type="text" 
-                    value={isEditing ? formData.bloodGroup : (userData?.bloodGroup || 'Not provided')} 
-                    onChange={(e) => setFormData({...formData, bloodGroup: e.target.value})}
-                    readOnly={!isEditing} 
+                  <input
+                    type="text"
+                    value={isEditing ? formData.bloodGroup : (userData?.bloodGroup || 'Not provided')}
+                    onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}
+                    readOnly={!isEditing}
                   />
                 </div>
                 <div className="form-group full-width">
                   <label>Address</label>
-                  <input 
-                    type="text" 
-                    value={isEditing ? formData.address : (userData?.address || 'Not provided')} 
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
-                    readOnly={!isEditing} 
+                  <input
+                    type="text"
+                    value={isEditing ? formData.address : (userData?.address || 'Not provided')}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    readOnly={!isEditing}
                   />
                 </div>
               </div>
@@ -175,16 +175,13 @@ const Profile = () => {
               <h2>Virtual ID Card</h2>
               <button className="download-btn">Download ID</button>
             </div>
-            
+
             <div className="id-card-wrapper">
               <div className="virtual-id-card">
                 <div className="id-card-header">
                   <div className="id-logo">
                     <div className="logo-icon">H</div>
                     <span>HOSTELIFY</span>
-                  </div>
-                  <div className="id-university">
-                    UNIVERSITY OF TECHNOLOGY
                   </div>
                 </div>
 
@@ -194,7 +191,7 @@ const Profile = () => {
                       {userData?.name?.charAt(0) || 'U'}
                     </div>
                   </div>
-                  
+
                   <div className="id-info-section">
                     <h1 className="id-title">STUDENT ID CARD</h1>
                     <div className="id-details">
@@ -230,7 +227,7 @@ const Profile = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="id-card-footer">
                   <div className="footer-wave"></div>
                 </div>

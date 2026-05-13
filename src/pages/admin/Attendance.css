@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 32px;
   padding-bottom: 40px;
+  min-height: 100%;
 }
 
 /* Theme Adaptation: Primary Terracotta */
@@ -119,7 +120,7 @@
 /* Table Card & Controls */
 .attendance-table-card {
   background-color: var(--bg-card);
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-premium);
   overflow: hidden;
@@ -131,6 +132,7 @@
   display: flex;
   align-items: center;
   gap: 32px;
+  background-color: var(--bg-card);
 }
 
 .search-box {
@@ -266,6 +268,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
 }
 
 .header-left-group {
@@ -290,6 +293,7 @@
 .attendance-summary-header {
   display: flex;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .summary-pill {
@@ -364,10 +368,11 @@
 }
 
 .date-selector-wrapper {
-  background: white;
+  background: var(--bg-card);
   padding: 4px;
   border-radius: 12px;
   border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .date-picker-input {

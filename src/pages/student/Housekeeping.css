@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+  min-height: 100%;
 }
 
 .hk-content-grid {
@@ -109,6 +110,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background-color: var(--bg-card);
+  box-shadow: var(--shadow-sm);
 }
 
 .staff-avatar {
@@ -232,6 +234,7 @@
   text-align: left;
   width: 100%;
   max-width: 500px;
+  box-shadow: var(--shadow-sm);
 }
 
 .debug-item {

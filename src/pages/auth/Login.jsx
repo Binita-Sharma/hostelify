@@ -93,15 +93,15 @@ const Login = () => {
           </form>
 
           <div className="auth-divider">
-            <span>Quick demo access</span>
+            <span>Quick access</span>
           </div>
 
           <div className="demo-buttons">
             <button className="demo-btn" onClick={() => { setEmail('admin@hostelify.com'); setPassword('admin123'); }}>
-              Admin demo
+              Admin
             </button>
             <button className="demo-btn" onClick={() => { setEmail('student@hostelify.com'); setPassword('student123'); }}>
-              Student demo
+              Student
             </button>
           </div>
 

@@ -78,6 +78,8 @@ const Dashboard = () => {
     feesPending: 0,
     activeComplaints: 0,
     activeNotices: 0,
+    housekeeping: 'Not Assigned',
+    housekeepingDetail: 'Pending assignment',
   });
   const [recentComplaints, setRecentComplaints] = useState([]);
   const [recentNotices, setRecentNotices] = useState([]);
@@ -85,15 +87,86 @@ const Dashboard = () => {
   useEffect(() => {
     if (!userData?.name) return;
 
+    let unsubscribeHousekeepingAssignment = () => {};
+    let unsubscribeHousekeepingInfo = () => {};
+    let unsubscribeHousekeepingSchedule = () => {};
+
+    const resetHousekeeping = () => {
+      unsubscribeHousekeepingAssignment();
+      unsubscribeHousekeepingInfo();
+      unsubscribeHousekeepingSchedule();
+      setStats(prev => ({
+        ...prev,
+        housekeeping: 'Not Assigned',
+        housekeepingDetail: 'Pending assignment'
+      }));
+    };
+
+    const syncHousekeepingForRoom = (room) => {
+      resetHousekeeping();
+
+      const blockId = room?.block;
+      const floorNo = parseInt(room?.floor?.toString().replace(/\D/g, ''));
+
+      if (!blockId || Number.isNaN(floorNo)) {
+        return;
+      }
+
+      unsubscribeHousekeepingAssignment = onValue(ref(realtimeDB, `housekeeping_assignments/${blockId}/${floorNo}`), (assignSnap) => {
+        const hkId = assignSnap.val();
+
+        if (!hkId) {
+          setStats(prev => ({
+            ...prev,
+            housekeeping: 'Not Assigned',
+            housekeepingDetail: `Block ${blockId} • Floor ${floorNo}`
+          }));
+          unsubscribeHousekeepingInfo();
+          return;
+        }
+
+        unsubscribeHousekeepingInfo();
+        unsubscribeHousekeepingInfo = onValue(ref(realtimeDB, `housekeepers/${hkId}`), (hkSnap) => {
+          const hk = hkSnap.val();
+          setStats(prev => ({
+            ...prev,
+            housekeeping: hk?.name || 'Assigned Staff',
+            housekeepingDetail: hk?.phone ? `Phone ${hk.phone}` : `Block ${blockId} • Floor ${floorNo}`
+          }));
+        });
+      });
+
+      unsubscribeHousekeepingSchedule = onValue(ref(realtimeDB, `housekeeping_schedules/${blockId}/${floorNo}`), (schedSnap) => {
+        const schedule = schedSnap.val();
+        setStats(prev => ({
+          ...prev,
+          housekeepingDetail: schedule ? `Cleaning: ${schedule}` : `Block ${blockId} • Floor ${floorNo}`
+        }));
+      });
+    };
+
     // 1. Room Assignment
     const roomsRef = ref(realtimeDB, 'rooms');
     const unsubscribeRoom = onValue(roomsRef, (snapshot) => {
       let foundRoom = null;
+
+      const matchesStudent = (roomStudent) => {
+        if (typeof roomStudent === 'string') {
+          return roomStudent === userData.name;
+        }
+
+        if (!roomStudent || typeof roomStudent !== 'object') {
+          return false;
+        }
+
+        return roomStudent.name === userData.name || roomStudent.id === userData.uid;
+      };
+
       if (snapshot.exists()) {
         const rooms = snapshot.val();
         for (const key in rooms) {
           const room = rooms[key];
-          if (room.students && room.students.includes(userData.name)) {
+          if (Array.isArray(room.students) && room.students.some(matchesStudent)) {
             foundRoom = room;
             break;
           }
@@ -106,12 +179,14 @@ const Dashboard = () => {
           room: `Room ${foundRoom.number}`,
           roomDetail: `${foundRoom.type} • Block ${foundRoom.block}`
         }));
+        syncHousekeepingForRoom(foundRoom);
       } else {
         setStats(prev => ({ 
           ...prev, 
           room: 'Not Assigned',
           roomDetail: 'Contact Admin'
         }));
+        resetHousekeeping();
       }
     });
 
@@ -177,6 +252,7 @@ const Dashboard = () => {
       unsubscribeFees();
       unsubscribeComplaints();
       unsubscribeNotices();
+      resetHousekeeping();
     };
   }, [userData]);
 
@@ -185,6 +261,10 @@ const Dashboard = () => {
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
+  };
+
+  const openNotifications = () => {
+    window.dispatchEvent(new CustomEvent('student-open-notifications'));
   };
 
   return (
@@ -231,15 +311,16 @@ const Dashboard = () => {
           <div className="stat-trend"><ChevronRight size={20} /></div>
         </div>
 
-        <div className="stat-card info">
-          <div className="stat-icon"><Bell size={24} /></div>
+        <div className="stat-card housekeeping" onClick={() => navigate('/student/housekeeping')}>
+          <div className="stat-icon"><Sparkles size={24} /></div>
           <div className="stat-info">
-            <span className="stat-label">Announcements</span>
-            <h3 className="stat-value">{stats.activeNotices}</h3>
-            <span className="stat-detail">{stats.activeNotices > 0 ? 'New updates' : 'No new notices'}</span>
+            <span className="stat-label">Assigned Housekeeping</span>
+            <h3 className="stat-value">{stats.housekeeping}</h3>
+            <span className="stat-detail">{stats.housekeepingDetail}</span>
           </div>
           <div className="stat-trend"><ChevronRight size={20} /></div>
         </div>
+
       </div>
 
       <div className="dashboard-main-grid">
@@ -269,7 +350,7 @@ const Dashboard = () => {
         <section className="dashboard-section notices-preview">
           <div className="section-header">
             <h2>Notices & Events</h2>
-            <button className="view-all">View All <ArrowRight size={16} /></button>
+            <button className="view-all" onClick={openNotifications}>View All <ArrowRight size={16} /></button>
           </div>
           <div className="notices-list">
             {recentNotices.length === 0 ? (
@@ -321,15 +402,6 @@ const Dashboard = () => {
               <ChevronRight size={16} />
             </div>
 
-          </div>
-        </section>
-
-        <section className="dashboard-section ai-assistant-cta">
-          <div className="ai-cta-content">
-            <div className="ai-icon">AI</div>
-            <h3>Need Help?</h3>
-            <p>Our intelligent assistant is here to help you with complaints, fees, and more.</p>
-            <button className="ai-btn">Chat with Assistant</button>
           </div>
         </section>
       </div>

@@ -26,12 +26,38 @@ const Complaints = () => {
   const [loading, setLoading] = useState(false);
   const [newComplaint, setNewComplaint] = useState({
     title: '',
-    category: 'Maintenance',
+    category: 'Water',
     description: '',
-    priority: 'Medium'
+    priority: 'High'
   });
 
-  const categories = ['Electricity', 'Water', 'Internet', 'Cleaning', 'Maintenance', 'Security', 'Others'];
+  const categoryPriorityMap = {
+    // High Priority
+    'Water': 'High',
+    'Electricity': 'High',
+    'Security': 'High',
+    'Plumbing': 'High',
+    'Ragging': 'High',
+    // Medium Priority
+    'Internet': 'Medium',
+    'Fees': 'Medium',
+    'Staff Behaviour': 'Medium',
+    'Attendance': 'Medium',
+    'AC': 'Medium',
+    'Geyser': 'Medium',
+    // Low Priority
+    'Furniture': 'Low',
+    'Maintenance': 'Low',
+    'Cleaning': 'Low',
+    'Roommates': 'Low',
+    'Corridor Issues': 'Low'
+  };
+
+  const categories = Object.keys(categoryPriorityMap);
+
+  const getPriorityForCategory = (category) => {
+    return categoryPriorityMap[category] || 'Medium';
+  };
 
   useEffect(() => {
     if (!userData) return;
@@ -81,7 +107,7 @@ const Complaints = () => {
       
       console.log('Complaint created for student:', userData.name, 'with ID:', studentId);
       setShowModal(false);
-      setNewComplaint({ title: '', category: 'Maintenance', description: '', priority: 'Medium' });
+      setNewComplaint({ title: '', category: 'Water', description: '', priority: 'High' });
     } catch (err) {
       console.error('Error adding complaint:', err);
     } finally {
@@ -198,27 +224,21 @@ const Complaints = () => {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Category</label>
-                  <select 
-                    value={newComplaint.category}
-                    onChange={(e) => setNewComplaint({...newComplaint, category: e.target.value})}
-                  >
-                    {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Priority</label>
-                  <select 
-                    value={newComplaint.priority}
-                    onChange={(e) => setNewComplaint({...newComplaint, priority: e.target.value})}
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
-                </div>
+              <div className="form-group">
+                <label>Category</label>
+                <select 
+                  value={newComplaint.category}
+                  onChange={(e) => {
+                    const selectedCategory = e.target.value;
+                    setNewComplaint({
+                      ...newComplaint, 
+                      category: selectedCategory,
+                      priority: getPriorityForCategory(selectedCategory)
+                    });
+                  }}
+                >
+                  {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
               </div>
 
               <div className="form-group">

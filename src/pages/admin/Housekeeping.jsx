@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { 
   Building2, 
-  ChevronRight, 
   Sparkles,
   ArrowRight,
   Shield,
@@ -10,14 +9,13 @@ import {
   Plus,
   ArrowLeft,
   User,
-  Phone,
   X,
   Check,
   Calendar,
   Clock
 } from 'lucide-react';
 import { realtimeDB } from '../../services/firebase';
-import { ref, onValue, push, set, update } from 'firebase/database';
+import { ref, onValue, push, set } from 'firebase/database';
 import './Housekeeping.css';
 
 const AdminHousekeeping = () => {

@@ -16,10 +16,12 @@ const AdminStudents = () => {
     address: '',
     rollNumber: '',
     email: '',
+    password: '',
     roomNumber: '',
     laundryAssigned: false
   });
   const [saving, setSaving] = useState(false);
+  const [isAddingNew, setIsAddingNew] = useState(false);
 
   useEffect(() => {
     const studentsRef = ref(realtimeDB, 'students');
@@ -42,6 +44,7 @@ const AdminStudents = () => {
 
   const handleEditClick = (student) => {
     setEditingStudent(student);
+    setIsAddingNew(false);
     setFormData({
       name: student.name || '',
       phone: student.phone || '',
@@ -50,8 +53,26 @@ const AdminStudents = () => {
       address: student.address || '',
       rollNumber: student.rollNumber || '',
       email: student.email || '',
+      password: student.password || '',
       roomNumber: student.roomNumber || '',
       laundryAssigned: student.laundryAssigned || false
+    });
+  };
+
+  const handleAddNewClick = () => {
+    setEditingStudent(null);
+    setIsAddingNew(true);
+    setFormData({
+      name: '',
+      phone: '',
+      emergencyContact: '',
+      bloodGroup: '',
+      address: '',
+      rollNumber: '',
+      email: '',
+      password: '',
+      roomNumber: '',
+      laundryAssigned: false
     });
   };
 
@@ -69,12 +90,23 @@ const AdminStudents = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const studentRef = ref(realtimeDB, `students/${editingStudent.id}`);
-      await update(studentRef, formData);
-      setEditingStudent(null);
-      // Success toast or notification could go here
+      if (isAddingNew) {
+        // Generate a new ID for the student (usually handled by Auth, but we use email format here as fallback)
+        const newId = formData.email.replace(/[@.]/g, '_') + '_' + Date.now();
+        const studentRef = ref(realtimeDB, `students/${newId}`);
+        await update(studentRef, {
+          ...formData,
+          createdAt: new Date().toISOString(),
+          role: 'student'
+        });
+        setIsAddingNew(false);
+      } else {
+        const studentRef = ref(realtimeDB, `students/${editingStudent.id}`);
+        await update(studentRef, formData);
+        setEditingStudent(null);
+      }
     } catch (err) {
-      console.error('Error updating student:', err);
+      console.error('Error saving student:', err);
     } finally {
       setSaving(false);
     }
@@ -87,7 +119,7 @@ const AdminStudents = () => {
           <h1>Student Management</h1>
           <p>View and manage all registered students.</p>
         </div>
-        <button className="add-student-btn">
+        <button className="add-student-btn" onClick={handleAddNewClick}>
           <UserPlus size={18} />
           <span>Add New Student</span>
         </button>
@@ -154,15 +186,15 @@ const AdminStudents = () => {
         </div>
       </div>
 
-      {editingStudent && (
+      {(editingStudent || isAddingNew) && (
         <div className="edit-modal-overlay">
           <div className="edit-modal-content animate-slide-up">
             <header className="modal-header">
               <div className="header-info">
-                <h2>Edit Student Profile</h2>
-                <p>Modify personal information and view ID card.</p>
+                <h2>{isAddingNew ? 'Add New Student' : 'Edit Student Profile'}</h2>
+                <p>{isAddingNew ? 'Enter student details to create a new profile.' : 'Modify personal information and view ID card.'}</p>
               </div>
-              <button className="close-btn" onClick={() => setEditingStudent(null)}>
+              <button className="close-btn" onClick={() => { setEditingStudent(null); setIsAddingNew(false); }}>
                 <X size={24} />
               </button>
             </header>
@@ -181,8 +213,25 @@ const AdminStudents = () => {
                     </div>
                     <div className="form-group">
                       <label><Mail size={14} /> Email Address</label>
-                      <input type="email" value={formData.email} readOnly />
+                      <input 
+                        type="email" 
+                        value={formData.email} 
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        readOnly={!isAddingNew}
+                        required
+                      />
                     </div>
+                    {isAddingNew && (
+                      <div className="form-group">
+                        <label>Password</label>
+                        <input 
+                          type="password" 
+                          value={formData.password} 
+                          onChange={(e) => setFormData({...formData, password: e.target.value})}
+                          required
+                        />
+                      </div>
+                    )}
                     <div className="form-group">
                       <label><Phone size={14} /> Phone Number</label>
                       <input 
@@ -243,10 +292,10 @@ const AdminStudents = () => {
                   </div>
 
                   <div className="modal-actions">
-                    <button type="button" className="btn-secondary" onClick={() => setEditingStudent(null)}>Cancel</button>
+                    <button type="button" className="btn-secondary" onClick={() => { setEditingStudent(null); setIsAddingNew(false); }}>Cancel</button>
                     <button type="submit" className="btn-primary" disabled={saving}>
                       <Save size={18} />
-                      {saving ? 'Saving...' : 'Save Changes'}
+                      {saving ? 'Saving...' : (isAddingNew ? 'Add Student' : 'Save Changes')}
                     </button>
                   </div>
                 </form>

@@ -1,7 +1,10 @@
 .student-fees-page {
   padding: 24px;
-  background-color: #f9f8f6;
+  background-color: var(--bg-main);
   min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .fees-header {
@@ -21,7 +24,7 @@
 .fees-header h1 {
   font-size: 32px;
   font-weight: 700;
-  color: #2d2d2d;
+  color: var(--text-main);
   margin: 0;
 }
 
@@ -36,8 +39,9 @@
 .stat-card {
   background: var(--bg-card);
   padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
   gap: 20px;
@@ -58,7 +62,7 @@
 }
 
 .icon-wrapper.pending {
-  background-color: var(--bg-card);beb;
+  background-color: var(--bg-card);
   color: #92400e;
 }
 
@@ -84,14 +88,15 @@
 .stat-value {
   font-size: 24px;
   font-weight: 700;
-  color: #2d2d2d;
+  color: var(--text-main);
 }
 
 /* Table Card */
 .fees-content-card {
   background: var(--bg-card);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   padding: 24px;
 }
@@ -103,7 +108,7 @@
 .content-header h2 {
   font-size: 18px;
   font-weight: 600;
-  color: #2d2d2d;
+  color: var(--text-main);
 }
 
 .fees-table-container {
@@ -120,16 +125,16 @@
 .fees-table th {
   padding: 16px;
   font-size: 13px;
-  font-weight: 500;
-  color: #8c8c8c;
-  border-bottom: 1px solid #f0f0f0;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
 }
 
 .fees-table td {
   padding: 20px 16px;
   font-size: 14px;
-  color: #2d2d2d;
-  border-bottom: 1px solid #f0f0f0;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border);
 }
 
 .status-badge {
@@ -141,7 +146,7 @@
 }
 
 .status-badge.pending {
-  background-color: var(--bg-card);9c4;
+  background-color: #fef3c7;
   color: #fbc02d;
 }
 
@@ -153,23 +158,23 @@
 .empty-state {
   padding: 60px;
   text-align: center;
-  color: #8c8c8c;
+  color: var(--text-muted);
   font-size: 15px;
 }
 
 .pay-now-btn {
-  background-color: #b45d4f;
+  background-color: var(--primary);
   color: var(--text-on-primary);
   border: none;
   padding: 6px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 600;
   transition: all 0.2s;
 }
 
 .pay-now-btn:hover {
-  background-color: #a04e41;
+  background-color: var(--primary-hover);
   transform: translateY(-1px);
 }
 

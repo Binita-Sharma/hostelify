@@ -11,7 +11,6 @@ import {
   Menu, 
   X, 
   Bell,
-  Search,
   ChevronDown,
   UtensilsCrossed,
   Megaphone,
@@ -23,16 +22,26 @@ import './Layout.css';
 
 const AdminLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { userData, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutConfirm(false);
     try {
       await logout();
       navigate('/login');
     } catch (err) {
       console.error('Failed to log out', err);
     }
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
 
   const menuItems = [
@@ -97,21 +106,12 @@ const AdminLayout = ({ children }) => {
             <button className="menu-toggle" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
               <Menu size={24} />
             </button>
-            <div className="search-bar">
-              <Search size={18} />
-              <input type="text" placeholder="Admin Search..." />
-            </div>
           </div>
 
           <div className="topbar-right">
-            <button className="icon-btn">
-              <Bell size={20} />
-              <span className="badge"></span>
-            </button>
-            
             <div className="user-profile">
               <div className="user-info">
-                <span className="user-name">{userData?.name || 'Admin'}</span>
+                <span className="user-name">{userData?.name?.replace('Demo ', '') || 'Admin'}</span>
                 <span className="user-role">Administrator</span>
               </div>
               <div className="avatar admin-avatar">
@@ -125,6 +125,19 @@ const AdminLayout = ({ children }) => {
         <section className="content-area">
           {children}
         </section>
+
+        {showLogoutConfirm && (
+          <div className="logout-modal-overlay" onClick={cancelLogout}>
+            <div className="logout-modal" onClick={(e) => e.stopPropagation()}>
+              <h3>Confirm Logout</h3>
+              <p>Are you sure you want to logout? You'll need to log in again to access the admin dashboard.</p>
+              <div className="logout-modal-actions">
+                <button className="cancel-logout-btn" onClick={cancelLogout}>Cancel</button>
+                <button className="confirm-logout-btn" onClick={confirmLogout}>Logout</button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

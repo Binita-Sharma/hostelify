@@ -30,70 +30,125 @@ const StudentHousekeeping = () => {
       return;
     }
 
-    // 1. Monitor student profile for room changes IN REAL TIME
+    let unsubscribeHK = () => {};
+    let unsubscribeHKInfo = () => {};
+    let unsubscribeSched = () => {};
+
+    const resetHK = () => {
+      unsubscribeHK();
+      unsubscribeHKInfo();
+      unsubscribeSched();
+      setHousekeeper(null);
+      setSchedule(null);
+    };
+
+    const loadHousekeepingForRoom = (room) => {
+      resetHK();
+      
+      const blockId = room?.block;
+      const floorNo = parseInt(room?.floor?.toString().replace(/\D/g, ''));
+
+      if (!blockId || Number.isNaN(floorNo)) {
+        return;
+      }
+
+      unsubscribeHK = onValue(ref(realtimeDB, `housekeeping_assignments/${blockId}/${floorNo}`), (assignSnap) => {
+        const hkId = assignSnap.val();
+        if (hkId) {
+          unsubscribeHKInfo();
+          unsubscribeHKInfo = onValue(ref(realtimeDB, `housekeepers/${hkId}`), (hkSnap) => {
+            setHousekeeper(hkSnap.val());
+          });
+        } else {
+          setHousekeeper(null);
+        }
+      });
+
+      unsubscribeSched = onValue(ref(realtimeDB, `housekeeping_schedules/${blockId}/${floorNo}`), (schedSnap) => {
+        setSchedule(schedSnap.val());
+      });
+    };
+
+    // Strategy 1: Try to get room from student profile
     const studentRef = ref(realtimeDB, `students/${userData.uid}`);
     const unsubscribeStudent = onValue(studentRef, (snapshot) => {
       const student = snapshot.val();
       setLiveStudentData(student);
-      const roomNum = student?.roomNumber;
 
-      if (!roomNum) {
-        setRoomData(null);
-        setLoading(false);
-        return;
+      if (student?.roomNumber) {
+        // Student has a room assigned in their profile, try to find it
+        const roomsRef = ref(realtimeDB, 'rooms');
+        onValue(roomsRef, (roomsSnap) => {
+          const rooms = roomsSnap.val();
+          if (!rooms) {
+            setRoomData(null);
+            setLoading(false);
+            return;
+          }
+
+          const myRoom = Object.values(rooms).find(r => r.number.toString() === student.roomNumber.toString());
+          if (myRoom) {
+            setRoomData(myRoom);
+            loadHousekeepingForRoom(myRoom);
+            setLoading(false);
+            setLastUpdated(new Date());
+            return;
+          }
+
+          // Strategy 2: Fallback - search rooms by student name
+          const fallbackRoom = Object.values(rooms).find(room => {
+            if (!Array.isArray(room.students)) return false;
+            return room.students.some(s => {
+              if (typeof s === 'string') return s === userData.name;
+              return s?.name === userData.name || s?.id === userData.uid;
+            });
+          });
+
+          if (fallbackRoom) {
+            setRoomData(fallbackRoom);
+            loadHousekeepingForRoom(fallbackRoom);
+          } else {
+            setRoomData(null);
+          }
+          setLoading(false);
+          setLastUpdated(new Date());
+        });
+      } else {
+        // Strategy 2: Search rooms by student name
+        const roomsRef = ref(realtimeDB, 'rooms');
+        onValue(roomsRef, (roomsSnap) => {
+          const rooms = roomsSnap.val();
+          if (!rooms) {
+            setRoomData(null);
+            setLoading(false);
+            return;
+          }
+
+          const myRoom = Object.values(rooms).find(room => {
+            if (!Array.isArray(room.students)) return false;
+            return room.students.some(s => {
+              if (typeof s === 'string') return s === userData.name;
+              return s?.name === userData.name || s?.id === userData.uid;
+            });
+          });
+
+          if (myRoom) {
+            setRoomData(myRoom);
+            loadHousekeepingForRoom(myRoom);
+          } else {
+            setRoomData(null);
+          }
+          setLoading(false);
+          setLastUpdated(new Date());
+        });
       }
-
-      // 2. Fetch all rooms to find matching details
-      const roomsRef = ref(realtimeDB, 'rooms');
-      onValue(roomsRef, (roomsSnap) => {
-        const rooms = roomsSnap.val();
-        if (!rooms) {
-          setLoading(false);
-          return;
-        }
-
-        const myRoom = Object.values(rooms).find(r => r.number.toString() === roomNum.toString());
-        if (!myRoom) {
-          setRoomData(null);
-          setLoading(false);
-          return;
-        }
-
-        setRoomData(myRoom);
-        const blockId = myRoom.block;
-        // Handle "1st", "Floor 1", "1" etc.
-        const floorNo = parseInt(myRoom.floor.toString().replace(/\D/g, ''));
-
-        if (blockId && !isNaN(floorNo)) {
-          // 3. Listen to Housekeeping Assignment
-          const assignPath = `housekeeping_assignments/${blockId}/${floorNo}`;
-          onValue(ref(realtimeDB, assignPath), (assignSnap) => {
-            const hkId = assignSnap.val();
-            if (hkId) {
-              const hkInfoRef = ref(realtimeDB, `housekeepers/${hkId}`);
-              onValue(hkInfoRef, (hkSnap) => {
-                setHousekeeper(hkSnap.val());
-              });
-            } else {
-              setHousekeeper(null);
-            }
-          });
-
-          // 4. Listen to Schedule
-          const schedPath = `housekeeping_schedules/${blockId}/${floorNo}`;
-          onValue(ref(realtimeDB, schedPath), (schedSnap) => {
-            setSchedule(schedSnap.val());
-          });
-        }
-        setLoading(false);
-        setLastUpdated(new Date());
-      });
     });
 
     return () => {
       unsubscribeStudent();
+      resetHK();
     };
-  }, [userData?.uid]);
+  }, [userData?.uid, userData?.name]);
 
   const handleRefresh = () => {
     setLoading(true);

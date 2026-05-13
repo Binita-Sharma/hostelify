@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { realtimeDB } from '../services/firebase';
+import { ref, onValue } from 'firebase/database';
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -11,28 +13,73 @@ import {
   Menu, 
   X, 
   Bell,
-  Search,
   ChevronDown,
   UtensilsCrossed,
   Shirt,
   Sparkles,
   Plane
 } from 'lucide-react';
-import AIChatbot from '../components/student/AIChatbot';
 import './Layout.css';
 
 const StudentLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notices, setNotices] = useState([]);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { userData, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutConfirm(false);
     try {
       await logout();
       navigate('/login');
     } catch (err) {
       console.error('Failed to log out', err);
     }
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
+
+  useEffect(() => {
+    const loadNotices = () => {
+      const noticesRef = ref(realtimeDB, 'notices');
+      return onValue(noticesRef, (snapshot) => {
+        const noticesData = snapshot.val();
+        const noticesArray = noticesData ? Object.entries(noticesData).map(([id, notice]) => ({ id, ...notice })) : [];
+
+        const filtered = noticesArray
+          .filter((notice) => !notice.targetStudentId || notice.targetStudentId === userData?.uid)
+          .sort((a, b) => (new Date(b.createdAt || 0) - new Date(a.createdAt || 0)));
+
+        setNotices(filtered);
+      });
+    };
+
+    const unsubscribe = loadNotices();
+
+    const handleOpenNotifications = () => setShowNotifications(true);
+    window.addEventListener('student-open-notifications', handleOpenNotifications);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('student-open-notifications', handleOpenNotifications);
+    };
+  }, [userData?.uid]);
+
+  const formatNoticeDate = (createdAt) => {
+    const noticeDate = new Date(createdAt || Date.now());
+    return noticeDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   const menuItems = [
@@ -89,16 +136,12 @@ const StudentLayout = ({ children }) => {
             <button className="menu-toggle" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
               <Menu size={24} />
             </button>
-            <div className="search-bar">
-              <Search size={18} />
-              <input type="text" placeholder="Search anything..." />
-            </div>
           </div>
 
           <div className="topbar-right">
-            <button className="icon-btn">
+            <button className="icon-btn" onClick={() => setShowNotifications(true)}>
               <Bell size={20} />
-              <span className="badge"></span>
+              {notices.length > 0 && <span className="badge"></span>}
             </button>
             
             <div className="user-profile">
@@ -117,7 +160,54 @@ const StudentLayout = ({ children }) => {
         <section className="content-area">
           {children}
         </section>
-        <AIChatbot />
+
+        {showNotifications && (
+          <div className="notification-overlay" onClick={() => setShowNotifications(false)}>
+            <div className="notification-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="notification-panel-header">
+                <div>
+                  <h3>Notices & Events</h3>
+                  <p>{notices.length} updates available</p>
+                </div>
+                <button className="close-btn" onClick={() => setShowNotifications(false)}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="notification-list">
+                {notices.length === 0 ? (
+                  <div className="empty-notifications">No notices or events right now.</div>
+                ) : (
+                  notices.map((notice) => (
+                    <div key={notice.id} className={`notification-item ${notice.category || 'general'}`}>
+                      <div className="notification-date">
+                        <span>{formatNoticeDate(notice.createdAt)}</span>
+                      </div>
+                      <div className="notification-content">
+                        <h4>{notice.title}</h4>
+                        <p>{notice.content}</p>
+                      </div>
+                      <span className="notification-tag">{notice.category || 'General'}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showLogoutConfirm && (
+          <div className="logout-modal-overlay" onClick={cancelLogout}>
+            <div className="logout-modal" onClick={(e) => e.stopPropagation()}>
+              <h3>Confirm Logout</h3>
+              <p>Are you sure you want to logout? You'll need to log in again to access your account.</p>
+              <div className="logout-modal-actions">
+                <button className="cancel-logout-btn" onClick={cancelLogout}>Cancel</button>
+                <button className="confirm-logout-btn" onClick={confirmLogout}>Logout</button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -1,124 +1,208 @@
+/* ================================================
+   ADMIN MESS MANAGEMENT — Clean & Professional
+   ================================================ */
+
 .admin-mess-container {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-height: 100%;
+  padding-bottom: 32px;
 }
 
-.subtitle {
+/* ---- Page Header ---- */
+.admin-mess-container .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.admin-mess-container .header-text .subtitle {
   font-size: 12px;
   font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 2px;
   text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 4px;
 }
 
-.page-header h1 {
-  font-size: 2.5rem;
-  margin-top: 8px;
+.admin-mess-container .header-text h1 {
+  font-size: clamp(1.6rem, 2.5vw, 2rem);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
 }
 
-.tab-container {
+/* ---- Tabs ---- */
+.admin-mess-container .tab-container {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 4px;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  width: fit-content;
 }
 
-.tab-btn {
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
+.admin-mess-container .tab-btn {
+  padding: 9px 20px;
+  border-radius: 9px;
   font-size: 14px;
   font-weight: 600;
-  background-color: #f1f5f9;
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.tab-btn.active {
+.admin-mess-container .tab-btn:hover {
+  color: var(--text-main);
+}
+
+.admin-mess-container .tab-btn.active {
   background-color: var(--bg-card);
   color: var(--text-main);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+/* ================================================
+   MENU EDITOR — Day Cards
+   ================================================ */
 .menu-editor {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .day-card {
   background-color: var(--bg-card);
-  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  border-radius: 16px;
+  padding: 24px 28px;
   box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease;
 }
 
+.day-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+/* Day Header */
 .day-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: var(--primary);
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.day-header svg {
+  color: var(--text-muted);
 }
 
 .day-header h3 {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
   color: var(--text-main);
 }
 
+/* Meal Inputs Grid */
 .meal-inputs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1100px) {
+  .meal-inputs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .meal-inputs {
+    grid-template-columns: 1fr;
+  }
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .input-group label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
 }
 
 .input-group input {
-  padding: 12px;
+  padding: 11px 14px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   background-color: var(--bg-main);
   font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.input-group input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 .input-group input:focus {
   border-color: var(--primary);
-  background-color: var(--bg-card);
+  background-color: #fff;
+  box-shadow: 0 0 0 3px var(--border-focus);
 }
 
+/* Save Button */
 .save-day-btn {
-  width: fit-content;
-  background-color: var(--primary);
-  color: var(--text-on-primary);
-  padding: 10px 20px;
-  border-radius: var(--radius-md);
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: 10px;
   font-size: 14px;
+  font-weight: 600;
+  background-color: var(--secondary);
+  color: var(--text-on-primary);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: fit-content;
 }
 
 .save-day-btn:hover {
-  background-color: var(--primary-hover);
+  background-color: #1e272e;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.loading {
-  height: 100%;
+.save-day-btn:active {
+  transform: translateY(0);
+}
+
+/* ---- Loading State ---- */
+.loading-state {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  color: var(--text-secondary);
+  min-height: 300px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-muted);
 }

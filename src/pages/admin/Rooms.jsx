@@ -9,17 +9,11 @@ import {
   UserPlus,
   X,
   User,
-  ChevronLeft,
-  Wind,
-  Snowflake,
-  Zap,
-  DollarSign,
   MapPin,
   Users,
   Sparkles,
   Clock
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Rooms.css';
 
 const AdminRooms = () => {
@@ -30,22 +24,9 @@ const AdminRooms = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [activeEnergyTab, setActiveEnergyTab] = useState('Week');
-  const [activeAppliance, setActiveAppliance] = useState('Fan');
   const [housekeepers, setHousekeepers] = useState([]);
   const [hkAssignments, setHkAssignments] = useState({});
   const [hkSchedules, setHkSchedules] = useState({});
-  
-  // Simulated electricity data
-  const chartData = [
-    { name: 'M', value: 12 },
-    { name: 'T', value: 18 },
-    { name: 'W', value: 15 },
-    { name: 'T', value: 25 },
-    { name: 'F', value: 20 },
-    { name: 'S', value: 30 },
-    { name: 'S', value: 22 },
-  ];
 
   const [newRoom, setNewRoom] = useState({
     number: '',
@@ -162,6 +143,47 @@ const AdminRooms = () => {
   const deleteRoom = async (id) => {
     if(window.confirm("Are you sure you want to delete this room?")) {
       await remove(ref(realtimeDB, 'rooms/' + id));
+    }
+  };
+
+  const removeStudentFromRoom = async (studentName, studentId) => {
+    if (!window.confirm(`Are you sure you want to remove ${studentName} from this room?`)) return;
+    
+    setLoading(true);
+    try {
+      // 1. Filter out the student from the room's array
+      const updatedStudents = (selectedRoom.students || []).filter(s => {
+        const id = typeof s === 'string' ? null : s.id;
+        const name = typeof s === 'string' ? s : s.name;
+        if (studentId && id) return id !== studentId;
+        return name !== studentName;
+      });
+      
+      const updates = {};
+      updates[`rooms/${selectedRoom.id}/students`] = updatedStudents;
+      updates[`rooms/${selectedRoom.id}/occupied`] = updatedStudents.length;
+
+      // 2. Remove room assignment from student's profile
+      let targetStudentId = studentId;
+      if (!targetStudentId) {
+        const studentRecord = students.find(s => s.name === studentName);
+        if (studentRecord) targetStudentId = studentRecord.id;
+      }
+      
+      if (targetStudentId) {
+        updates[`students/${targetStudentId}/roomNumber`] = null;
+      }
+
+      await update(ref(realtimeDB), updates);
+      
+      // Update local modal state immediately
+      setSelectedRoom(prev => ({...prev, students: updatedStudents, occupied: updatedStudents.length}));
+      
+    } catch (err) {
+      console.error('Error removing student:', err);
+      alert('Failed to remove student from room.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -330,6 +352,13 @@ const AdminRooms = () => {
                               </span>
                             </div>
                             <div className="member-contact">{studentData?.phone || 'No phone'}</div>
+                            <button 
+                              className="remove-member-btn" 
+                              title="Remove from room"
+                              onClick={() => removeStudentFromRoom(sName, sId)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
                           </div>
                         );
                       })
@@ -391,75 +420,7 @@ const AdminRooms = () => {
                 </section>
               </div>
 
-              <div className="details-right">
-                <div className="energy-usage-card admin-view">
-                  <header className="energy-header">
-                    <div className="energy-title-group">
-                      <h2>Electricity Consumption</h2>
-                    </div>
-                    <div className="energy-tabs">
-                      {['Day', 'Week', 'Month'].map(tab => (
-                        <button 
-                          key={tab} 
-                          className={`energy-tab ${activeEnergyTab === tab ? 'active' : ''}`}
-                          onClick={() => setActiveEnergyTab(tab)}
-                        >
-                          {tab}
-                        </button>
-                      ))}
-                    </div>
-                  </header>
 
-                  <div className="energy-controls">
-                    <div className="appliance-selector">
-                      <button className={`appliance-btn ${activeAppliance === 'Fan' ? 'active fan' : ''}`} onClick={() => setActiveAppliance('Fan')}>
-                        <Wind size={16} /> <span>Fan</span>
-                      </button>
-                      <button className={`appliance-btn ${activeAppliance === 'AC' ? 'active ac' : ''}`} onClick={() => setActiveAppliance('AC')}>
-                        <Snowflake size={16} /> <span>AC</span>
-                      </button>
-                    </div>
-                    <div className="unit-toggle">
-                      <button className="unit-btn active"><DollarSign size={14} /></button>
-                    </div>
-                  </div>
-
-                  <div className="energy-metrics">
-                    <div className="metric">
-                      <span className="metric-label">Current Cost</span>
-                      <div className="metric-value-group">
-                        <span className="currency">₹</span>
-                        <span className="value">842</span>
-                      </div>
-                    </div>
-                    <div className="metric">
-                      <span className="metric-label">Usage</span>
-                      <div className="metric-value-group">
-                        <span className="value">124</span>
-                        <span className="unit">kWh</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="energy-chart-container">
-                    <ResponsiveContainer width="100%" height={150}>
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient id="adminColorValue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 10}} />
-                        <YAxis hide />
-                        <Tooltip />
-                        <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} fill="url(#adminColorValue)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
